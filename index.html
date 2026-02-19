@@ -234,158 +234,146 @@
     </footer>
 
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyAPDnqtVz3WqAj9sLBLDA0VnOzQ_pR0k",
-            authDomain: "ownproject-52911.firebaseapp.com",
-            projectId: "ownproject-52911",
-            storageBucket: "ownproject-52911.firebasestorage.app",
-            messagingSenderId: "559198644334",
-            appId: "1:559198644334:web:b53a8545f8d8c30aa15e7f"
-        };
+    const firebaseConfig = {
+        apiKey: "AIzaSyAPDnqtVz3WqAj9sLBLDA0VnOzQ_pR0k",
+        authDomain: "ownproject-52911.firebaseapp.com",
+        projectId: "ownproject-52911",
+        storageBucket: "ownproject-52911.firebasestorage.app",
+        messagingSenderId: "559198644334",
+        appId: "1:559198644334:web:b53a8545f8d8c30aa15e7f"
+    };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        AOS.init({ duration: 800 });
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    AOS.init({ duration: 800 });
 
-        window.toggleMenu = () => { document.getElementById('navLinks').classList.toggle('active'); };
+    window.toggleMenu = () => { document.getElementById('navLinks').classList.toggle('active'); };
 
-        const sysId = btoa(navigator.userAgent).substring(0, 25);
-
-        // --- SECURITY: CHAT LOCK & FORM HIDE ---
-        const checkLock = async () => {
-            const q = query(collection(db, "elite_units"), where("deviceId", "==", sysId));
-            const snap = await getDocs(q);
-            if (!snap.empty) {
-                const u = snap.docs[0].data();
-                localStorage.setItem('current_session_user', u.name);
-                
-                // UNLOCK CHAT
-                document.getElementById('chatInp').disabled = false;
-                document.getElementById('chatInp').placeholder = "Type message...";
-                document.getElementById('chatBtn').disabled = false;
-
-                document.getElementById('sidebarBox').innerHTML = `
-                    <div style="text-align:center; padding: 20px 0;">
-                        <h3 style="color:var(--primary); font-weight:800;">SYSTEM ACTIVE</h3>
-                        <p>Welcome, <b>${u.name}</b></p><br>
-                        <a href="ellite.html" class="boot-btn">MY PROFILE</a>
-                    </div>`;
-            }
-        };
-        checkLock();
-
-        // --- CHAT LOGIC ---
-        window.sendSecureMsg = async () => {
-            const user = localStorage.getItem('current_session_user');
-            const inp = document.getElementById('chatInp');
-            if(!user || !inp.value.trim()) return;
-            await addDoc(collection(db, "secure_chats"), { sender: user, msg: btoa(inp.value), time: Date.now() });
-            inp.value = '';
-        };
-
-        const today = new Date(); today.setHours(0,0,0,0);
-        onSnapshot(query(collection(db, "secure_chats"), where("time", ">=", today.getTime()), orderBy("time", "asc")), (snap) => {
-            const box = document.getElementById('chatContent');
-            const me = localStorage.getItem('current_session_user');
-            box.innerHTML = '';
-            snap.forEach(doc => {
-                const c = doc.data();
-                if(c.sender === me || c.sender === "🛡️ ADMIN") {
-                    const style = (c.sender === me) ? 'margin-left:auto; background:var(--primary); color:white;' : 'background:#eee;';
-                    box.innerHTML += `<div style="max-width:85%; padding:10px; border-radius:12px; margin-bottom:10px; font-size:0.8rem; width:fit-content; ${style}"><strong>${c.sender}</strong><br>${atob(c.msg)}</div>`;
-                }
-            });
-            box.scrollTop = box.scrollHeight;
-        });
-
-        // --- ANNOUNCEMENT ---
-        onSnapshot(query(collection(db, "announcements"), orderBy("time", "desc"), limit(1)), (snap) => {
-            if(!snap.empty) { document.getElementById('annText').innerText = snap.docs[0].data().msg; }
-        });
-
-        // --- IMAGE PREVIEW ---
-        document.getElementById('userImg').onchange = e => {
-            const reader = new FileReader();
-            reader.onload = ev => {
-                document.getElementById('imgPreview').src = ev.target.result;
-                document.getElementById('imgPreview').style.display = "block";
-                document.getElementById('plusIcon').style.display = "none";
-            };
-            reader.readAsDataURL(e.target.files[0]);
-        };
-
-        // --- REGISTRATION ---
-        document.getElementById('regForm').onsubmit = async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('bootBtn');
-            btn.disabled = true; btn.innerText = "BOOTING...";
-            try {
-                await addDoc(collection(db, "elite_units"), {
-                    name: document.getElementById('userName').value.trim(),
-                    deviceId: sysId,
-                    role: document.getElementById('userRole').value,
-                    contact: document.getElementById('userContact').value,
-                    situation: document.getElementById('userSituation').value,
-                    photo: document.getElementById('imgPreview').src,
-                    points: 0, likes: 0, followers: 0, in_arena: "no", time: Date.now()
-                });
-                location.reload(); 
-            } catch (err) { alert(err.message); btn.disabled = false; }
-        };
-
-        // --- SQUAD SYNC ---
-        onSnapshot(query(collection(db, "elite_units"), orderBy("time", "desc"), limit(3)), (snap) => {
-            const grid = document.getElementById('featuredGrid');
-            grid.innerHTML = '';
-            snap.forEach(doc => {
-                const u = doc.data();
-                grid.innerHTML += `<div class="member-card"><img src="${u.photo}"><h4>${u.name}</h4><p style="color:var(--primary); font-size:0.7rem; font-weight:800;">${u.role}</p></div>`;
-            });
-        });
-
-
-//for erena logic check what is true or false pop send 
-
-        async function enterArena() {
-    const myName = localStorage.getItem('current_session_user');
-
-    // 1. Check: Kya user login hai?
-    if (!myName) {
-        alert("⚠️ ACCESS DENIED: Please register/login first to enter the Arena!");
-        window.location.href = "index.html#register"; // Register section pe bhejo
-        return;
+    // --- FIX 1: UNIQUE USER IDENTIFICATION ---
+    // User Agent ki jagah Unique Random ID jo browser mein save rahegi
+    let sysId = localStorage.getItem('g_fusebox_uid');
+    if (!sysId) {
+        sysId = 'elite_' + Math.random().toString(36).substr(2, 9) + Date.now();
+        localStorage.setItem('g_fusebox_uid', sysId);
     }
 
-    try {
-        const q = query(collection(db, "elite_units"), where("name", "==", myName));
-        const snapshot = await getDocs(q);
+    // --- SECURITY: CHAT LOCK & FORM HIDE ---
+    const checkLock = async () => {
+        const q = query(collection(db, "elite_units"), where("deviceId", "==", sysId));
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+            const u = snap.docs[0].data();
+            localStorage.setItem('current_session_user', u.name);
+            
+            // UNLOCK CHAT
+            document.getElementById('chatInp').disabled = false;
+            document.getElementById('chatInp').placeholder = "Type message...";
+            document.getElementById('chatBtn').disabled = false;
 
-        // 2. Check: Kya data exist karta hai?
-        if (snapshot.empty) {
-            alert("⚠️ IDENTITY NOT FOUND: Please register your profile first.");
-            return;
+            document.getElementById('sidebarBox').innerHTML = `
+                <div style="text-align:center; padding: 20px 0;">
+                    <div style="width:80px; height:80px; border-radius:50%; border:3px solid var(--primary); margin:0 auto 10px; overflow:hidden;">
+                        <img src="${u.photo}" style="width:100%; height:100%; object-fit:cover;">
+                    </div>
+                    <h3 style="color:var(--primary); font-weight:800;">SYSTEM ACTIVE</h3>
+                    <p>Welcome, <b>${u.name}</b></p><br>
+                    <a href="update.html" class="boot-btn">MY PROFILE</a>
+                </div>`;
         }
+    };
+    checkLock();
 
-        const userData = snapshot.docs[0].data();
+    // --- CHAT LOGIC (FIX 2: GROUP CHAT VISIBILITY) ---
+    window.sendSecureMsg = async () => {
+        const user = localStorage.getItem('current_session_user');
+        const inp = document.getElementById('chatInp');
+        if(!user || !inp.value.trim()) return;
+        await addDoc(collection(db, "secure_chats"), { 
+            sender: user, 
+            msg: btoa(inp.value), 
+            time: Date.now(),
+            uid: sysId // For identification
+        });
+        inp.value = '';
+    };
 
-        // 3. Check: Kya Admin ne 'in_arena' allow kiya hai?
-        if (userData.in_arena === 'yes') {
-            window.location.href = "newerena.html"; // Allow Access
-        } else {
-            // User registered hai par allowed nahi hai
-            alert("🚫 SYSTEM LOCK: Access not allowed by G-Fusebox.\n\nNote: If you haven't sent a request, please do so from your card in the Elite Zone!");
-            window.location.href = "ellite.html"; // Profile card pe bhejo request bhejne ke liye
-        }
-    } catch (error) {
-        console.error("Error checking access:", error);
-        alert("System Error. Try again later.");
-    }
-}
-window.enterArena = enterArena;
-    </script>
+    const today = new Date(); today.setHours(0,0,0,0);
+    onSnapshot(query(collection(db, "secure_chats"), where("time", ">=", today.getTime()), orderBy("time", "asc")), (snap) => {
+        const box = document.getElementById('chatContent');
+        const me = localStorage.getItem('current_session_user');
+        box.innerHTML = '';
+        snap.forEach(doc => {
+            const c = doc.data();
+            // Ab sabka message dikhega, bas "Mera" blue aur "Admin" dark dikhega
+            const isMe = (c.sender === me);
+            const isAdmin = (c.sender === "🛡️ ADMIN");
+            
+            let style = 'background:#e2e8f0; color:black; margin-right:auto;'; // Default others
+            if(isMe) style = 'margin-left:auto; background:var(--primary); color:white;';
+            if(isAdmin) style = 'margin: 5px auto; background:var(--dark); color:gold; border:1px solid gold;';
+
+            box.innerHTML += `
+                <div style="max-width:85%; padding:10px; border-radius:12px; margin-bottom:10px; font-size:0.8rem; width:fit-content; ${style}">
+                    <strong style="font-size:0.6rem; opacity:0.8;">${c.sender}</strong><br>
+                    ${atob(c.msg)}
+                </div>`;
+        });
+        box.scrollTop = box.scrollHeight;
+    });
+
+    // --- ANNOUNCEMENT ---
+    onSnapshot(query(collection(db, "announcements"), orderBy("time", "desc"), limit(1)), (snap) => {
+        if(!snap.empty) { document.getElementById('annText').innerText = snap.docs[0].data().msg; }
+    });
+
+    // --- IMAGE PREVIEW ---
+    document.getElementById('userImg').onchange = e => {
+        const reader = new FileReader();
+        reader.onload = ev => {
+            document.getElementById('imgPreview').src = ev.target.result;
+            document.getElementById('imgPreview').style.display = "block";
+            document.getElementById('plusIcon').style.display = "none";
+        };
+        reader.readAsDataURL(e.target.files[0]);
+    };
+
+    // --- REGISTRATION ---
+    document.getElementById('regForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('bootBtn');
+        btn.disabled = true; btn.innerText = "BOOTING...";
+        try {
+            await addDoc(collection(db, "elite_units"), {
+                name: document.getElementById('userName').value.trim(),
+                deviceId: sysId, // Unique ID used here
+                role: document.getElementById('userRole').value,
+                contact: document.getElementById('userContact').value,
+                situation: document.getElementById('userSituation').value,
+                photo: document.getElementById('imgPreview').src,
+                points: 0, likes: 0, followers: 0, in_arena: "no", time: Date.now()
+            });
+            location.reload(); 
+        } catch (err) { alert(err.message); btn.disabled = false; }
+    };
+
+    // --- SQUAD SYNC ---
+    onSnapshot(query(collection(db, "elite_units"), orderBy("time", "desc"), limit(3)), (snap) => {
+        const grid = document.getElementById('featuredGrid');
+        grid.innerHTML = '';
+        snap.forEach(doc => {
+            const u = doc.data();
+            grid.innerHTML += `
+                <div class="member-card" data-aos="zoom-in">
+                    <img src="${u.photo}">
+                    <h4>${u.name}</h4>
+                    <p style="color:var(--primary); font-size:0.7rem; font-weight:800;">${u.role}</p>
+                </div>`;
+        });
+    });
+</script>
 </body>
 </html>
