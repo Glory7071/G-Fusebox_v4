@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>G-Fusebox | Engineering Elite</title>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #2563eb; --primary-dark: #1d4ed8; --dark: #0f172a; --main-bg: #f1f5f9; --white: #ffffff; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--main-bg); color: var(--dark); line-height: 1.6; overflow-x: hidden; }
+
+        /* NAVIGATION */
+        nav { display: flex; justify-content: space-between; align-items: center; padding: 0 5%; height: 75px; background: var(--white); border-bottom: 2px solid #e2e8f0; position: sticky; top: 0; z-index: 1000; }
+        .logo { font-weight: 800; font-size: 1.2rem; color: var(--primary); }
+        .nav-links { display: flex; gap: 20px; align-items: center; }
+        .nav-links a { text-decoration: none; color: var(--dark); font-weight: 600; font-size: 0.9rem; transition: 0.3s; }
+        .menu-btn { display: none; font-size: 1.8rem; cursor: pointer; color: var(--dark); }
+
+        header, section, .main-container { padding: 40px 5%; }
+        
+        /* HERO SECTION (Desktop Side-by-Side) */
+        .hero { padding-top: 60px; display: flex; align-items: center; gap: 30px; background: radial-gradient(circle at top right, #cbd5e1, #f1f5f9); min-height: 500px; }
+        .hero-text { flex: 1.2; padding: 30px; background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); border-radius: 30px; border-left: 10px solid var(--primary); }
+        .hero-video { flex: 0.8; height: 350px; border-radius: 30px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.1); background: #000; }
+        .hero-video video { width: 100%; height: 100%; object-fit: cover; }
+
+        /* ANNOUNCEMENT */
+        .ann-bar { text-align: center; margin-bottom: 20px; padding: 0 5%; }
+        .ann-card { background: #eff6ff; border-radius: 50px; padding: 10px 25px; display: inline-flex; align-items: center; gap: 10px; border: 1px solid var(--primary); }
+
+        /* EXECUTION GRID */
+        .execution { background: white; text-align: center; border-bottom: 1px solid #e2e8f0; border-top: 1px solid #e2e8f0; }
+        .exe-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-top: 30px; }
+        .info-box { background: #f8fafc; padding: 30px; border-radius: 20px; border: 1px solid #e2e8f0; text-align: left; }
+
+        /* MAIN LAYOUT (Desktop Right Sidebar) */
+        .main-container { display: grid; grid-template-columns: 1fr 350px; gap: 30px; align-items: start; }
+        .squad-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 25px; }
+        .member-card { background: white; padding: 20px; border-radius: 20px; border: 1px solid #e2e8f0; text-align: center; }
+        .member-card img { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary); margin-bottom: 10px; }
+
+        /* SIDEBAR & CHAT */
+        .sidebar { background: white; padding: 25px; border-radius: 25px; border: 1px solid #e2e8f0; }
+        .secure-zone { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
+        .admin-card { background: var(--dark); color: white; padding: 25px; border-radius: 25px; display: flex; align-items: center; gap: 20px; }
+        .admin-card img { width: 90px; height: 90px; border-radius: 15px; border: 3px solid var(--primary); }
+        .chat-box { background: white; border: 1px solid #e2e8f0; border-radius: 25px; padding: 20px; height: 350px; display: flex; flex-direction: column; }
+        #chatContent { flex: 1; overflow-y: auto; margin-bottom: 15px; }
+        #chatInp:disabled { background: #f1f5f9; cursor: not-allowed; }
+
+        /* BUTTONS & INPUTS */
+        .boot-btn { width: 100%; padding: 15px; background: var(--dark); color: white; border: none; border-radius: 10px; font-weight: 800; cursor: pointer; transition: 0.3s; display: block; text-decoration: none; text-align: center; }
+        .boot-btn:hover { background: var(--primary); }
+        .preview-circle { width: 70px; height: 70px; border-radius: 50%; border: 2px dashed var(--primary); margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; }
+        input, select { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 10px; border: 1px solid #ddd; outline: none; }
+
+        /* RESPONSIVE FIXES (Only for Mobile) */
+        @media (max-width: 900px) { 
+            nav { padding: 0 20px; }
+            .menu-btn { display: block; }
+            .nav-links { 
+                display: none; position: absolute; top: 75px; left: 0; width: 100%; background: white; 
+                flex-direction: column; padding: 20px; border-bottom: 2px solid var(--primary); 
+            }
+            .nav-links.active { display: flex; }
+            .hero { flex-direction: column; text-align: center; padding-top: 30px; }
+            .hero-text { border-left: none; border-top: 10px solid var(--primary); width: 100%; }
+            .hero-video { width: 100%; height: 250px; }
+            .main-container { grid-template-columns: 1fr; }
+            .sidebar { order: -1; } /* Register form first on mobile */
+            .secure-zone { grid-template-columns: 1fr; }
+            .admin-card { flex-direction: column; text-align: center; }
+        }
+
+
+
+        /*new anoounce */
+        /* ANNOUNCEMENT UPDATED */
+.ann-bar { 
+    text-align: center; 
+    margin-bottom: 20px; 
+    padding: 0 5%; 
+    display: flex; 
+    justify-content: center; /* Center alignment */
+}
+
+.ann-card { 
+    background: #eff6ff; 
+    border-radius: 15px; /* Thoda kam round takki multi-line achha dikhe */
+    padding: 12px 20px; 
+    display: flex; 
+    align-items: center; 
+    gap: 15px; 
+    border: 1px solid var(--primary); 
+    width: 100%; /* Mobile par full width */
+    max-width: 800px; /* Desktop par limit */
+    transition: all 0.3s ease;
+}
+
+.ann-tag {
+    background: var(--primary);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    white-space: nowrap; /* Tag ek line mein rahega */
+}
+
+#annText { 
+    font-size: 0.9rem; 
+    font-weight: 600; 
+    text-align: left; /* Message left align taaki multi-line achha lage */
+    word-break: break-word; /* Lambe words box se bahar na jayein */
+    flex: 1; /* Pura bacha hua space text le lega */
+}
+
+/* Mobile responsive tweak */
+@media (max-width: 600px) {
+    .ann-card {
+        flex-direction: column; /* Mobile par tag upar aur text niche */
+        align-items: flex-start;
+        gap: 8px;
+        border-radius: 20px;
+    }
+}
+
+        footer { background: var(--dark); color: white; padding: 40px 5%; text-align: center; margin-top: 50px; }
+    </style>
+</head>
+<body>
+
+    <nav>
+    <div class="logo">G-FUSEBOX</div>
+    <div class="menu-btn" onclick="toggleMenu()">☰</div>
+    <div class="nav-links" id="navLinks">
+        <a href="index.html">Home</a>
+        <a href="ellite.html">Elite Directory</a>
+        <a href="newerena.html" onclick="enterArena(); return false;" style="color:var(--primary); font-weight: 800;">CODE_WARS ⚔️</a>
+    </div>
+</nav>
+
+    <header class="hero">
+        <div class="hero-text" data-aos="fade-right">
+            <h1>Building the Next <br><span style="color:var(--primary)">Software Powerhouse.</span></h1>
+            <p>Join our core development team today. Start your journey into high-end engineering.</p>
+        </div>
+        <div class="hero-video" data-aos="fade-left">
+            <video autoplay muted loop playsinline><source src="hero-promo-video.mp4" type="video/mp4"></video>
+        </div>
+    </header>
+
+    <div class="ann-bar" data-aos="fade-up">
+    <div class="ann-card">
+        <span class="ann-tag">Protocol Update</span>
+        <p id="annText">Initialising secure link...</p>
+    </div>
+</div>
+
+    <section class="execution" data-aos="fade-up">
+        <h2 style="font-weight: 800; font-size: 2rem; margin-bottom: 10px;">Where <span style="color: var(--primary);">Learning</span> Meets <span style="color: var(--primary);">Execution.</span></h2>
+        <div class="exe-grid">
+            <div class="info-box">
+                <h4 style="color: var(--primary);">⚡ The Power Grid</h4>
+                <p style="font-size: 0.9rem; color: #64748b; margin-top: 5px;">Access premium tech stacks and real-world production environments.</p>
+            </div>
+            <div class="info-box">
+                <h4 style="color: var(--primary);">🎓 Skill-Up Protocol</h4>
+                <p style="font-size: 0.9rem; color: #64748b; margin-top: 5px;">Learn by building complex, high-performance systems.</p>
+            </div>
+        </div>
+    </section>
+
+    <div class="main-container">
+        <div class="main-content">
+            <h2 style="margin-bottom:20px; font-weight: 800;">Elite Squad (Top 3)</h2>
+            <div class="squad-grid" id="featuredGrid"></div>
+            <a href="ellite.html" class="boot-btn" style="display:inline-block; padding: 12px 30px; font-size: 0.8rem; width: auto;">VIEW FULL ELITE DIRECTORY</a>
+        </div>
+
+        <div class="sidebar" id="sidebarBox">
+            <h3 style="margin-bottom:15px; color: var(--primary); font-weight: 800;">Plug into Grid</h3>
+            <form id="regForm">
+                <div class="preview-circle" onclick="document.getElementById('userImg').click()">
+                    <span id="plusIcon" style="font-size: 24px; color: var(--primary);">+</span><img id="imgPreview" style="width:100%; height:100%; object-fit:cover; display:none;">
+                </div>
+                <input type="file" id="userImg" accept="image/*" style="display:none;" required>
+                <input type="text" id="userName" placeholder="Full Name" required>
+                <input type="number" id="userContact" placeholder="WhatsApp No." required>
+                <select id="userRole">
+                    <option value="Frontend Ninja">Frontend Ninja</option>
+                    <option value="Backend Architect">Backend Architect</option>
+                    <option value="Designer">Designer</option>
+                    <option value="Video Editor">Video Editor</option>
+                </select>
+                <select id="userSituation" required>
+                    <option value="" disabled selected>Select Status</option>
+                    <option value="UG Student">UG Student</option>
+                    <option value="PG Student">PG Student</option>
+                    <option value="Dropper">Dropper</option>
+                    <option value="Pro">Working Professional</option>
+                </select>
+                <button type="submit" id="bootBtn" class="boot-btn">BOOT SYSTEM</button>
+            </form>
+        </div>
+
+        <div class="secure-zone">
+            <div class="admin-card" data-aos="fade-right">
+                <img src="https://i.pinimg.com/736x/4d/16/63/4d166369d529ee53ef0f3486dfb4e973.jpg">
+                <div>
+                    <h3>Gaurav Yadav</h3>
+                    <p style="opacity: 0.7; font-size: 0.8rem;">Lead Architect</p>
+                    <a href="https://wa.me/your_number" class="boot-btn" style="padding: 8px 15px; margin-top: 10px; font-size: 11px; background: #25d366; width: fit-content; border:none;">WHATSAPP</a>
+                </div>
+            </div>
+
+            <div class="chat-box" data-aos="fade-left">
+                <h4 style="color: var(--primary); margin-bottom: 10px;">Secure Transmission</h4>
+                <div id="chatContent"></div>
+                <div class="chat-input" style="display:flex; gap:10px;">
+                    <input type="text" id="chatInp" placeholder="Register to unlock chat..." disabled style="margin-bottom:0;">
+                    <button id="chatBtn" class="boot-btn" style="width:60px; padding:0; border:none;" onclick="sendSecureMsg()" disabled>➔</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-logo">G-FUSEBOX</div>
+        <p>© 2026 Engineering Elite Protocol. All Rights Reserved.</p>
+    </footer>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAPDnqtVz3WqAj9sLBLDA0VnOzQ_pR0k",
+            authDomain: "ownproject-52911.firebaseapp.com",
+            projectId: "ownproject-52911",
+            storageBucket: "ownproject-52911.firebasestorage.app",
+            messagingSenderId: "559198644334",
+            appId: "1:559198644334:web:b53a8545f8d8c30aa15e7f"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        AOS.init({ duration: 800 });
+
+        window.toggleMenu = () => { document.getElementById('navLinks').classList.toggle('active'); };
+
+        const sysId = btoa(navigator.userAgent).substring(0, 25);
+
+        // --- SECURITY: CHAT LOCK & FORM HIDE ---
+        const checkLock = async () => {
+            const q = query(collection(db, "elite_units"), where("deviceId", "==", sysId));
+            const snap = await getDocs(q);
+            if (!snap.empty) {
+                const u = snap.docs[0].data();
+                localStorage.setItem('current_session_user', u.name);
+                
+                // UNLOCK CHAT
+                document.getElementById('chatInp').disabled = false;
+                document.getElementById('chatInp').placeholder = "Type message...";
+                document.getElementById('chatBtn').disabled = false;
+
+                document.getElementById('sidebarBox').innerHTML = `
+                    <div style="text-align:center; padding: 20px 0;">
+                        <h3 style="color:var(--primary); font-weight:800;">SYSTEM ACTIVE</h3>
+                        <p>Welcome, <b>${u.name}</b></p><br>
+                        <a href="ellite.html" class="boot-btn">MY PROFILE</a>
+                    </div>`;
+            }
+        };
+        checkLock();
+
+        // --- CHAT LOGIC ---
+        window.sendSecureMsg = async () => {
+            const user = localStorage.getItem('current_session_user');
+            const inp = document.getElementById('chatInp');
+            if(!user || !inp.value.trim()) return;
+            await addDoc(collection(db, "secure_chats"), { sender: user, msg: btoa(inp.value), time: Date.now() });
+            inp.value = '';
+        };
+
+        const today = new Date(); today.setHours(0,0,0,0);
+        onSnapshot(query(collection(db, "secure_chats"), where("time", ">=", today.getTime()), orderBy("time", "asc")), (snap) => {
+            const box = document.getElementById('chatContent');
+            const me = localStorage.getItem('current_session_user');
+            box.innerHTML = '';
+            snap.forEach(doc => {
+                const c = doc.data();
+                if(c.sender === me || c.sender === "🛡️ ADMIN") {
+                    const style = (c.sender === me) ? 'margin-left:auto; background:var(--primary); color:white;' : 'background:#eee;';
+                    box.innerHTML += `<div style="max-width:85%; padding:10px; border-radius:12px; margin-bottom:10px; font-size:0.8rem; width:fit-content; ${style}"><strong>${c.sender}</strong><br>${atob(c.msg)}</div>`;
+                }
+            });
+            box.scrollTop = box.scrollHeight;
+        });
+
+        // --- ANNOUNCEMENT ---
+        onSnapshot(query(collection(db, "announcements"), orderBy("time", "desc"), limit(1)), (snap) => {
+            if(!snap.empty) { document.getElementById('annText').innerText = snap.docs[0].data().msg; }
+        });
+
+        // --- IMAGE PREVIEW ---
+        document.getElementById('userImg').onchange = e => {
+            const reader = new FileReader();
+            reader.onload = ev => {
+                document.getElementById('imgPreview').src = ev.target.result;
+                document.getElementById('imgPreview').style.display = "block";
+                document.getElementById('plusIcon').style.display = "none";
+            };
+            reader.readAsDataURL(e.target.files[0]);
+        };
+
+        // --- REGISTRATION ---
+        document.getElementById('regForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('bootBtn');
+            btn.disabled = true; btn.innerText = "BOOTING...";
+            try {
+                await addDoc(collection(db, "elite_units"), {
+                    name: document.getElementById('userName').value.trim(),
+                    deviceId: sysId,
+                    role: document.getElementById('userRole').value,
+                    contact: document.getElementById('userContact').value,
+                    situation: document.getElementById('userSituation').value,
+                    photo: document.getElementById('imgPreview').src,
+                    points: 0, likes: 0, followers: 0, in_arena: "no", time: Date.now()
+                });
+                location.reload(); 
+            } catch (err) { alert(err.message); btn.disabled = false; }
+        };
+
+        // --- SQUAD SYNC ---
+        onSnapshot(query(collection(db, "elite_units"), orderBy("time", "desc"), limit(3)), (snap) => {
+            const grid = document.getElementById('featuredGrid');
+            grid.innerHTML = '';
+            snap.forEach(doc => {
+                const u = doc.data();
+                grid.innerHTML += `<div class="member-card"><img src="${u.photo}"><h4>${u.name}</h4><p style="color:var(--primary); font-size:0.7rem; font-weight:800;">${u.role}</p></div>`;
+            });
+        });
+
+
+//for erena logic check what is true or false pop send 
+
+        async function enterArena() {
+    const myName = localStorage.getItem('current_session_user');
+
+    // 1. Check: Kya user login hai?
+    if (!myName) {
+        alert("⚠️ ACCESS DENIED: Please register/login first to enter the Arena!");
+        window.location.href = "index.html#register"; // Register section pe bhejo
+        return;
+    }
+
+    try {
+        const q = query(collection(db, "elite_units"), where("name", "==", myName));
+        const snapshot = await getDocs(q);
+
+        // 2. Check: Kya data exist karta hai?
+        if (snapshot.empty) {
+            alert("⚠️ IDENTITY NOT FOUND: Please register your profile first.");
+            return;
+        }
+
+        const userData = snapshot.docs[0].data();
+
+        // 3. Check: Kya Admin ne 'in_arena' allow kiya hai?
+        if (userData.in_arena === 'yes') {
+            window.location.href = "newerena.html"; // Allow Access
+        } else {
+            // User registered hai par allowed nahi hai
+            alert("🚫 SYSTEM LOCK: Access not allowed by G-Fusebox.\n\nNote: If you haven't sent a request, please do so from your card in the Elite Zone!");
+            window.location.href = "ellite.html"; // Profile card pe bhejo request bhejne ke liye
+        }
+    } catch (error) {
+        console.error("Error checking access:", error);
+        alert("System Error. Try again later.");
+    }
+}
+window.enterArena = enterArena;
+    </script>
+</body>
+</html>

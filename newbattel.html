@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Elite Combat | G-Fuse Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #020617; --p1: #6366f1; --p2: #f43f5e; --panel: #0f172a; --text: #f8fafc; --gold: #f59e0b; --green: #10b981; }
+        * { margin:0; padding:0; box-sizing: border-box; touch-action: manipulation; }
+        body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; min-height: 100vh; overflow-x: hidden; }
+        
+        /* 📱 HUD */
+        .hud { position: sticky; top: 0; height: 75px; display: grid; grid-template-columns: 1fr 1.5fr 1fr; align-items: center; padding: 0 15px; background: var(--panel); border-bottom: 2px solid #1e293b; z-index: 2000; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
+        .p-info { display: flex; align-items: center; gap: 8px; }
+        .p-pfp { width: 42px; height: 42px; border-radius: 8px; border: 2px solid #334155; object-fit: cover; background: #000; }
+        .p-name { font-weight: 800; font-size: 10px; letter-spacing: 0.5px; }
+        #mission-box { background: rgba(245, 158, 11, 0.1); padding: 8px; border: 1px dashed var(--gold); border-radius: 8px; text-align: center; margin: 0 5px; }
+        #mission-text { color: var(--gold); font-size: 10px; font-weight: 900; line-height: 1.2; text-transform: uppercase; }
+
+        /* ⚔️ COMBAT ZONE */
+        .combat-zone { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; background: #1e293b; min-height: 550px; } 
+        @media (max-width: 900px) { .combat-zone { grid-template-columns: 1fr; gap: 20px; padding: 10px; background: var(--bg); } }
+
+        .editor-container { background: var(--bg); display: flex; flex-direction: column; position: relative; overflow: hidden; }
+        .player-label { background: #0f172a; padding: 12px 15px; font-size: 11px; font-weight: 800; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e293b; }
+        textarea { height: 250px; background: #020617; border:none; color: #60a5fa; font-family: 'Fira Code', monospace; padding: 15px; outline: none; resize: none; font-size: 14px; line-height: 1.6; border-bottom: 1px solid #1e293b; }
+        
+        .preview-header { background: #f1f5f9; padding: 5px 15px; display: flex; align-items: center; gap: 5px; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; }
+        .preview-box { flex: 1; min-height: 280px; background: white; position: relative; overflow: hidden; }
+        iframe { width: 100%; height: 100%; border: none; background: white; }
+        .expand-btn { position: absolute; bottom: 15px; right: 15px; background: var(--bg); color: var(--gold); border: 1px solid var(--gold); padding: 8px 16px; border-radius: 8px; font-size: 11px; font-weight: 900; z-index: 1000; cursor: pointer; }
+
+        /* ✅ FIXED FULL VIEW CSS (YEH ADD KIYA HAI) */
+        .full-screen-preview { position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 9999 !important; background: white !important; }
+        .full-screen-preview .expand-btn { position: fixed; bottom: 30px; right: 30px; background: #000; border: 2px solid var(--gold); }
+
+        /* 🌑 GLITCH SYSTEM */
+        @keyframes shake { 0% { transform: translate(0,0); } 20% { transform: translate(-5px, 5px); } 100% { transform: translate(0,0); } }
+        .glitch-active { animation: shake 0.1s infinite; position: relative; }
+        .glitch-active::after { content: "⚠️ HACKED ⚠️"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #ff3e3e; font-weight: 900; font-size: 24px; z-index: 101; text-align: center; width: 100%; }
+        .glitch-active textarea, .glitch-active .preview-box { opacity: 0.05; filter: blur(10px); }
+
+        /* 🎰 BETTING OVERLAY */
+        #betting-overlay { position: fixed; inset: 0; background: rgba(2, 6, 23, 0.95); z-index: 9000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
+        .bet-card { background: var(--panel); padding: 30px; border-radius: 24px; border: 1px solid var(--gold); text-align: center; width: 90%; max-width: 400px; box-shadow: 0 0 30px rgba(245,158,11,0.2); }
+        .bet-input { width: 100%; padding: 15px; margin: 20px 0; background: #020617; border: 1px solid #334155; color: var(--gold); border-radius: 12px; text-align: center; font-size: 20px; font-weight: 800; font-family: 'Fira Code'; }
+        .bet-btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .b-btn { padding: 15px; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; text-transform: uppercase; transition: 0.2s; }
+        .b-btn:active { transform: scale(0.95); }
+        .close-bet { background: transparent; color: #64748b; margin-top: 20px; cursor: pointer; border: none; font-weight: 700; font-size: 12px; text-decoration: underline; }
+
+        /* 📜 CONTENT SECTION */
+        .extra-content { padding: 40px 20px; background: #020617; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; border-top: 2px solid #1e293b; padding-bottom: 160px; }
+        .info-card { background: var(--panel); padding: 25px; border-radius: 15px; border-left: 4px solid var(--gold); }
+        .info-card h3 { color: var(--gold); margin-bottom: 10px; font-size: 18px; }
+        .info-card p { font-size: 13px; line-height: 1.6; color: #94a3b8; }
+
+        /* 💰 ACTION PANEL */
+        .action-panel { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--panel); border-top: 2px solid var(--gold); padding: 15px; z-index: 5000; }
+        .action-grid { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; align-items: center; }
+        .btn-vote { width: 100%; border: none; padding: 12px; border-radius: 8px; color: white; font-weight: 800; font-size: 13px; cursor: pointer; text-transform: uppercase; transition: 0.3s; }
+        .btn-vote.locked { opacity: 0.2; cursor: not-allowed; filter: grayscale(1); }
+        #match-timer { font-size: 26px; font-weight: 900; color: var(--gold); font-family: 'Fira Code'; text-align: center; }
+        
+        #celebration { position: fixed; inset: 0; background: var(--bg); z-index: 100000; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+<div id="betting-overlay">
+    <div class="bet-card">
+        <h2 style="color:var(--gold);">🎰 ARENA BETTING</h2>
+        <p style="font-size:12px; color:#94a3b8; margin-top:5px;">Predict the winner to multiply your XP</p>
+        <input type="number" id="bet-amount" class="bet-input" placeholder="0000">
+        <div class="bet-btn-row">
+            <button onclick="handleBet('p1')" class="b-btn" style="background:var(--p1); color:white;">P1 WIN</button>
+            <button onclick="handleBet('p2')" class="b-btn" style="background:var(--p2); color:white;">P2 WIN</button>
+        </div>
+        <button onclick="document.getElementById('betting-overlay').style.display='none'" class="close-bet">SKIP & SPECTATE</button>
+    </div>
+</div>
+
+<div id="celebration">
+    <div style="font-size: 100px;">🏆</div>
+    <h1 id="win-text" style="color: var(--gold); font-size: 40px; text-transform: uppercase;">PLAYER 1 WINS</h1>
+    <p id="xp-gain-msg" style="color: var(--green); margin: 20px 0; font-weight: 800; letter-spacing: 1px;"></p>
+    <button onclick="window.location.href='newerena.html'" style="background:var(--green); color:white; border:none; padding:18px 40px; border-radius:12px; font-weight:800; cursor:pointer; box-shadow: 0 10px 20px rgba(16,185,129,0.3);">BACK TO ARENA</button>
+</div>
+
+<header class="hud">
+    <div class="p-info">
+        <img id="p1-pfp" src="" class="p-pfp" style="border-color: var(--p1)">
+        <div id="p1-name" class="p-name" style="color: var(--p1)">P1_LOAD</div>
+    </div>
+    <div id="mission-box">
+        <div id="mission-text">MISSION: AWAITING DEPLOYMENT...</div>
+    </div>
+    <div class="p-info" style="flex-direction: row-reverse; text-align: right;">
+        <img id="p2-pfp" src="" class="p-pfp" style="border-color: var(--p2)">
+        <div id="p2-name" class="p-name" style="color: var(--p2)">P2_LOAD</div>
+    </div>
+</header>
+
+<main class="combat-zone">
+    <div class="editor-container" id="zone-p1">
+        <div class="player-label" style="color: var(--p1);">
+            <span>LIVE CODE SOURCE : P1</span>
+            <button id="atk-p2" class="btn-vote" style="background:red; width:auto; padding:4px 10px; font-size:9px; display:none;" onclick="launchAttack('p2')">HACK P2</button>
+        </div>
+        <textarea id="ed-p1" readonly spellcheck="false" placeholder="Waiting for player..."></textarea>
+        <div class="preview-header">
+            <div class="dot" style="background:#ff5f56"></div>
+            <div class="dot" style="background:#ffbd2e"></div>
+            <div class="dot" style="background:#27c93f"></div>
+            <span style="color:#64748b; font-size:9px; font-weight:800; margin-left:5px">P1_RENDER.HTML</span>
+        </div>
+        <div class="preview-box" id="pre-box-p1">
+            <iframe id="pre-p1"></iframe>
+            <button class="expand-btn" onclick="toggleExpand('pre-box-p1')">FULL VIEW</button>
+        </div>
+    </div>
+
+    <div class="editor-container" id="zone-p2">
+        <div class="player-label" style="color: var(--p2);">
+            <span>LIVE CODE SOURCE : P2</span>
+            <button id="atk-p1" class="btn-vote" style="background:red; width:auto; padding:4px 10px; font-size:9px; display:none;" onclick="launchAttack('p1')">HACK P1</button>
+        </div>
+        <textarea id="ed-p2" readonly spellcheck="false" placeholder="Waiting for player..."></textarea>
+        <div class="preview-header">
+            <div class="dot" style="background:#ff5f56"></div>
+            <div class="dot" style="background:#ffbd2e"></div>
+            <div class="dot" style="background:#27c93f"></div>
+            <span style="color:#64748b; font-size:9px; font-weight:800; margin-left:5px">P2_RENDER.HTML</span>
+        </div>
+        <div class="preview-box" id="pre-box-p2">
+            <iframe id="pre-p2"></iframe>
+            <button class="expand-btn" onclick="toggleExpand('pre-box-p2')">FULL VIEW</button>
+        </div>
+    </div>
+</main>
+
+<section class="extra-content">
+    <div class="info-card">
+        <h3>⚡ G-Fuse Sync Engine</h3>
+        <p>G-Fuse ensures zero-latency code transmission. Every tag is broadcasted live to the arena audience across the globe.</p>
+    </div>
+    <div class="info-card" style="border-left-color: var(--p2);">
+        <h3>🛡️ Anti-Cheat Protocol</h3>
+        <p>AI-assisted injection is forbidden. The system only permits image/asset URLs. Local script execution is monitored.</p>
+    </div>
+    <div class="info-card" style="border-left-color: var(--green);">
+        <h3>🗳️ Voting Influence</h3>
+        <p>The audience holds the power. When voting opens, your influence determines the winner of the G-Fuse battle.</p>
+    </div>
+</section>
+
+<div class="action-panel">
+    <div class="action-grid">
+        <div style="text-align:center;">
+            <button id="v-btn-p1" onclick="castVote('p1')" class="btn-vote locked" style="background:var(--p1)">LOCKED</button>
+            <div id="v-count-p1" style="font-size:11px; margin-top:5px; color:var(--p1); font-weight:800;">0 VOTES</div>
+        </div>
+        <div id="match-timer">--:--</div>
+        <div style="text-align:center;">
+            <button id="v-btn-p2" onclick="castVote('p2')" class="btn-vote locked" style="background:var(--p2)">LOCKED</button>
+            <div id="v-count-p2" style="font-size:11px; margin-top:5px; color:var(--p2); font-weight:800;">0 VOTES</div>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, doc, onSnapshot, updateDoc, collection, query, where, getDocs, arrayUnion, getDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = { 
+        apiKey: "AIzaSyAPDnqtVz3WqAj9sLBLDA0VnOzQ_pR0k", 
+        authDomain: "ownproject-52911.firebaseapp.com", 
+        projectId: "ownproject-52911", 
+        storageBucket: "ownproject-52911.firebasestorage.app", 
+        messagingSenderId: "559198644334", 
+        appId: "1:559198644334:web:b53a8545f8d8c30aa15e7f" 
+    };
+    
+    const db = getFirestore(initializeApp(firebaseConfig));
+    const myName = localStorage.getItem('current_session_user');
+    const matchId = new URLSearchParams(window.location.search).get('match') || '1v1';
+
+    let finalProcessed = false;
+
+    // --- 🎰 BETTING LOGIC ---
+   window.handleBet = async (side) => {
+    const amount = parseInt(document.getElementById('bet-amount').value);
+    if(!amount || amount < 50) return alert("Min bet 10 Points!");
+
+    const q = query(collection(db, "elite_units"), where("name", "==", myName));
+    const snap = await getDocs(q);
+    if(snap.empty) return alert("Profile Error!");
+    
+    const userDoc = snap.docs[0];
+    const userData = userDoc.data();
+    
+    if((userData.points || 0) < amount) return alert("Insufficient Points!");
+
+    // 1. Points kaato turant
+    await updateDoc(doc(db, "elite_units", userDoc.id), {
+        points: increment(-amount)
+    });
+
+    // 2. Bet register karo
+    await updateDoc(doc(db, "active_matches", matchId), {
+        [`betters.${myName}`]: { side: side, amount: amount }
+    });
+
+    document.getElementById('betting-overlay').style.display = 'none';
+    alert(`Bet of ${amount} locked on ${side === 'p1' ? 'Player 1' : 'Player 2'}!`);
+};
+
+    // --- FIREBASE SYNC ---
+    onSnapshot(doc(db, "active_matches", matchId), (snap) => {
+        if(!snap.exists()) return;
+        const d = snap.data();
+
+        const isPlayer = (myName === d.player1 || myName === d.player2);
+        
+        // Betting Overlay Logic
+        if(d.status === 'waiting' && !isPlayer && (!d.betters || !d.betters[myName])) {
+            document.getElementById('betting-overlay').style.display = 'flex';
+        } else {
+            document.getElementById('betting-overlay').style.display = 'none';
+        }
+
+        // Voting Buttons UI
+        const v1 = document.getElementById('v-btn-p1');
+        const v2 = document.getElementById('v-btn-p2');
+        if(d.status === 'voting') {
+            v1.classList.remove('locked'); v2.classList.remove('locked');
+            v1.innerText = "VOTE P1"; v2.innerText = "VOTE P2";
+        } else {
+            v1.classList.add('locked'); v2.classList.add('locked');
+            v1.innerText = "LOCKED"; v2.innerText = "LOCKED";
+        }
+
+        document.getElementById('mission-text').innerText = "MISSION: " + (d.task_desc || "PENDING").toUpperCase();
+        document.getElementById('v-count-p1').innerText = `${d.p1_votes || 0} VOTES`;
+        document.getElementById('v-count-p2').innerText = `${d.p2_votes || 0} VOTES`;
+        
+        // Finish Logic (Admin triggers this)
+        if(d.winner && !finalProcessed) handleFinish(d.winner);
+        
+        renderSide('p1', d.p1_code, d.player1, d.p1_glitch);
+        renderSide('p2', d.p2_code, d.player2, d.p2_glitch);
+        
+        if(d.timer_end) updateTimer(d.timer_end);
+    });
+
+    async function renderSide(slot, code, player, isGlitch) {
+    const ed = document.getElementById(`ed-${slot}`);
+    const zone = document.getElementById(`zone-${slot}`);
+    const pfp = document.getElementById(`${slot}-pfp`);
+    const nameD = document.getElementById(`${slot}-name`);
+    const atkBtn = document.getElementById(`atk-${slot === 'p1' ? 'p2' : 'p1'}`);
+
+    if(isGlitch) zone.classList.add('glitch-active'); else zone.classList.remove('glitch-active');
+
+    // --- RESET LOGIC (YEH ADD KIYA HAI) ---
+    if(!player || player === "") {
+        nameD.innerText = slot.toUpperCase() + "_LOAD";
+        ed.value = ""; // Editor saaf karo
+        ed.readOnly = true; // Editor lock karo
+        atkBtn.style.display = 'none'; // Attack button chhupao
+        pfp.src = ""; // PFP hatao
+        pfp.removeAttribute('data-u');
+        
+        // Iframe bhi saaf karo
+        const ifr = document.getElementById(`pre-${slot}`);
+        ifr.contentWindow.document.open();
+        ifr.contentWindow.document.write("");
+        ifr.contentWindow.document.close();
+        return; // Aage ka code mat chalao
+    }
+    // --- RESET LOGIC END ---
+
+    if(player) {
+        nameD.innerText = player.toUpperCase();
+        if(pfp.getAttribute('data-u') !== player) { 
+            const q = query(collection(db, "elite_units"), where("name", "==", player));
+            const s = await getDocs(q);
+            pfp.src = (!s.empty && s.docs[0].data().photo) ? s.docs[0].data().photo : `https://api.dicebear.com/7.x/bottts/svg?seed=${player}`;
+            pfp.setAttribute('data-u', player); 
+        }
+    }
+
+    if(player === myName) {
+        ed.readOnly = false; 
+        atkBtn.style.display = 'block';
+        ed.oninput = (e) => updateDoc(doc(db, "active_matches", matchId), { [`${slot}_code`]: e.target.value });
+    } else {
+        // Sirf tab update karo jab code sach mein badla ho (cursor jumping rokne ke liye)
+        if(ed.value !== code) ed.value = code || "";
+    }
+
+    const ifr = document.getElementById(`pre-${slot}`);
+    const idoc = ifr.contentWindow.document;
+    idoc.open(); 
+    idoc.write(`<style>body{margin:15px;font-family:sans-serif;background:white;word-wrap:break-word;} img{max-width:100%;border-radius:12px;}</style>${code || ""}`);
+    idoc.close();
+}
+
+    window.launchAttack = (target) => {
+        updateDoc(doc(db, "active_matches", matchId), { [`${target}_glitch`]: true });
+        setTimeout(() => updateDoc(doc(db, "active_matches", matchId), { [`${target}_glitch`]: false }), 4000);
+    };
+
+    window.toggleExpand = (id) => {
+        const box = document.getElementById(id);
+        const isFull = box.classList.toggle('full-screen-preview');
+        box.querySelector('.expand-btn').innerText = isFull ? "CLOSE VIEW" : "FULL VIEW";
+        document.body.style.overflow = isFull ? 'hidden' : 'auto';
+    };
+
+    // ⭐ UPDATED VOTE LOGIC (10 POINTS PER VOTE)
+    window.castVote = async (slot) => {
+        const s = await getDoc(doc(db, "active_matches", matchId));
+        const d = s.data();
+
+        // 1. Basic Checks
+        if(d.status !== 'voting') return alert("Voting is not active!");
+        if(myName === d.player1 || myName === d.player2) return alert("Players cannot vote!");
+        if(d.voters?.includes(myName)) return alert("You already voted!");
+
+        const targetPlayer = slot === 'p1' ? d.player1 : d.player2;
+        if(!targetPlayer) return;
+
+        try {
+            // 2. Update Match (Vote count + Voter list)
+            await updateDoc(doc(db, "active_matches", matchId), { 
+                [`${slot}_votes`]: increment(1), 
+                voters: arrayUnion(myName) 
+            });
+
+            // 3. Update Player's Profile (Add 10 Points)
+            const q = query(collection(db, "elite_units"), where("name", "==", targetPlayer));
+            const snap = await getDocs(q);
+            
+            if(!snap.empty) {
+                await updateDoc(doc(db, "elite_units", snap.docs[0].id), {
+                    points: increment(10)
+                });
+                alert(`Vote cast! +10 Battle Points sent to ${targetPlayer}`);
+            }
+        } catch(e) {
+            console.error("Voting Error:", e);
+        }
+    };
+
+    function updateTimer(endTime) {
+        const diff = endTime - new Date().getTime();
+        const tBox = document.getElementById('match-timer');
+        if(diff <= 0) {
+            tBox.innerText = "00:00";
+            tBox.style.color = "#f43f5e";
+        } else {
+            const m = Math.floor(diff/60000); const s = Math.floor((diff%60000)/1000);
+            tBox.innerText = `${m}:${s<10?'0'+s:s}`;
+            tBox.style.color = "var(--gold)";
+        }
+    }
+
+    function handleFinish(winner) {
+        finalProcessed = true;
+        document.getElementById('celebration').style.display = 'flex';
+        document.getElementById('win-text').innerText = winner + " WINS!";
+    }
+
+    const editors = [document.getElementById('ed-p1'), document.getElementById('ed-p2')];
+    editors.forEach(ed => {
+        ed.onpaste = (e) => {
+            e.preventDefault();
+            const txt = (e.clipboardData || window.clipboardData).getData('text');
+            if(txt.startsWith('http')) {
+                const s = ed.selectionStart;
+                ed.value = ed.value.substring(0, s) + txt + ed.value.substring(ed.selectionEnd);
+                ed.dispatchEvent(new Event('input'));
+            } else alert("🚫 URLS ONLY!");
+        };
+    });
+</script>
+</body>
+</html>

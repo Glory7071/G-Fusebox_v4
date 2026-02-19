@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elite Arena | Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --bg: #f8fafc; --card: #ffffff; --text: #0f172a; 
+            --accent: #4f46e5; --border: #e2e8f0; --gold: #f59e0b; 
+            --red: #ef4444; --green: #10b981;
+        }
+        * { margin:0; padding:0; box-sizing: border-box; }
+        body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; display: none; }
+        
+        header { height: 70px; background: #fff; border-bottom: 2px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 5%; position: sticky; top:0; z-index: 1000; }
+        .header-logo { font-size: 1.1rem; font-weight: 900; }
+        .header-logo span { color: var(--accent); }
+        .u-pfp-main { width: 42px; height: 42px; border-radius: 12px; border: 2px solid var(--accent); object-fit: cover; background: #eee; }
+
+        .container { max-width: 1200px; margin: 25px auto; padding: 0 15px; }
+        .events-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 20px; }
+
+        .event-card { background: var(--card); border-radius: 28px; padding: 25px; border: 1px solid var(--border); display: flex; flex-direction: column; transition: 0.3s; }
+        .badge { font-size: 10px; font-weight: 800; padding: 5px 12px; border-radius: 8px; margin-bottom: 12px; align-self: flex-start; }
+
+        .mission-area { background: #f8fafc; border: 1px dashed var(--border); padding: 15px; border-radius: 18px; margin: 12px 0; min-height: 80px; }
+        .mission-label { font-size: 9px; font-weight: 800; color: var(--accent); text-transform: uppercase; }
+        .mission-text { font-size: 13px; font-weight: 600; color: #475569; margin-top: 5px; }
+
+        .vs-box { display: flex; align-items: center; justify-content: space-around; margin: 15px 0; padding: 10px; background: #fff; border-radius: 20px; border: 1px solid #f1f5f9; }
+        .p-slot { text-align: center; flex: 1; }
+        .p-img { width: 55px; height: 55px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
+        .p-name { font-size: 10px; font-weight: 800; margin-top: 5px; display: block; }
+
+        .sq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
+        .sq-box { padding: 12px; border-radius: 18px; border: 1px solid #f1f5f9; text-align: center; }
+        .sq-list { font-size: 10px; color: #64748b; font-weight: 600; min-height: 35px; margin: 5px 0; }
+
+        .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: auto; }
+        .btn { padding: 14px; border-radius: 14px; font-weight: 800; cursor: pointer; text-align: center; font-size: 12px; border: none; transition: 0.2s; }
+        .btn-join { background: var(--accent); color: white; }
+        .btn-join:disabled { background: #cbd5e1; cursor: not-allowed; }
+        .btn-spec { background: #f1f5f9; color: var(--text); text-decoration: none; }
+        .btn-sq { width: 100%; padding: 10px; border-radius: 12px; border: none; font-weight: 800; font-size: 10px; margin-top: 8px; cursor: pointer; }
+        .btn-leave { background: #0f172a; color: white; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="header-logo">ELITE<span>ARENA</span></div>
+    <img id="uPfp" src="" class="u-pfp-main">
+</header>
+
+<main class="container">
+    <div class="events-grid">
+        
+        <div class="event-card" id="card-1v1">
+            <div class="badge" style="background:#e0e7ff; color:var(--accent);">⚔️ 1V1 DUEL</div>
+            <h3 style="font-weight:800;">Logic Sprint</h3>
+            <div class="mission-area">
+                <div class="mission-label">Target Objective</div>
+                <div id="mission-1v1" class="mission-text">Waiting for Admin Mission...</div>
+            </div>
+            <div class="vs-box">
+                <div class="p-slot"><img id="1v1-p1-img" src="" class="p-img"><span id="1v1-p1-name" class="p-name">EMPTY</span></div>
+                <div style="font-weight:900; color:#cbd5e1;">VS</div>
+                <div class="p-slot"><img id="1v1-p2-img" src="" class="p-img"><span id="1v1-p2-name" class="p-name">EMPTY</span></div>
+            </div>
+            <div class="actions">
+                <button id="join-1v1" class="btn btn-join" onclick="joinMatch('1v1')" disabled>JOIN DUEL</button>
+                <button id="watch-1v1" class="btn btn-spec" onclick="watchMatch('newbattel.html')">WATCH</button>
+            </div>
+        </div>
+
+        <div class="event-card" id="card-3v3">
+            <div class="badge" style="background:#f3e8ff; color:#6b21a8;">🛡️ SQUAD MODE</div>
+            <h3 style="font-weight:800;">Squad Siege 3v3</h3>
+            <div class="mission-area">
+                <div class="mission-label">Squad Mission</div>
+                <div id="mission-3v3" class="mission-text">Waiting for Admin Mission...</div>
+            </div>
+            <div class="sq-grid">
+                <div class="sq-box" style="background:#f0f7ff;">
+                    <b style="font-size:10px; color:var(--accent)">ALPHA <span id="a-count">0/3</span></b>
+                    <div id="alpha-list" class="sq-list">Empty</div>
+                    <button id="btn-a" class="btn-sq" style="background:#e0e7ff; color:var(--accent)" onclick="toggleSquad('alpha')" disabled>JOIN</button>
+                </div>
+                <div class="sq-box" style="background:#fff1f2;">
+                    <b style="font-size:10px; color:var(--red)">DELTA <span id="d-count">0/3</span></b>
+                    <div id="delta-list" class="sq-list">Empty</div>
+                    <button id="btn-d" class="btn-sq" style="background:#fee2e2; color:var(--red)" onclick="toggleSquad('delta')" disabled>JOIN</button>
+                </div>
+            </div>
+            <div class="actions">
+                <button id="watch-3v3" class="btn btn-spec" style="grid-column: span 2;" onclick="watchMatch('Battlefield3v3.html')">ENTER ARENA</button>
+            </div>
+        </div>
+
+        <div class="event-card">
+            <div class="badge" style="background:#f1f5f9; color:#475569;">🔑 PRIVATE</div>
+            <h3 style="font-weight:800;">Private Duel</h3>
+            <div class="mission-area" style="display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;">
+                <div id="private-status" style="font-size:12px; color:#94a3b8; font-weight:600;">Only authorized players.</div>
+            </div>
+            <div class="actions">
+    <button class="btn btn-join" style="background:#475569;" onclick="joinPrivate()">JOIN ROOM</button>
+    <button class="btn btn-spec" onclick="watchPrivate()" style="background:#f1f5f9; color:#475569;">WATCH</button>
+    <button id="btn-create-private" class="btn btn-spec" onclick="createPrivate()" style="grid-column: span 2; margin-top:5px;">CREATE</button>
+</div>
+        </div>
+
+
+        <div class="info-card" style="border-left: 4px solid #10b981; position: relative; cursor: pointer; transition: 0.3s;" onclick="window.location.href='terminalv2.html'">
+    <div style="position: absolute; top: 10px; right: 10px;">
+        <span style="display: inline-block; width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981; animation: pulse 1.5s infinite;"></span>
+    </div>
+    <h3 style="color: #10b981; margin-bottom: 8px;">📟 TERMINAL_WAR: OVERRIDE</h3>
+    <p style="font-size: 12px; color: #94a3b8; line-height: 1.5;">
+        No UI, no buttons. Pure command-line battle. Execute system hacks, bypass firewalls, and capture the flag.
+    </p>
+    <div style="margin-top: 15px; font-family: 'Fira Code', monospace; font-size: 10px; color: #10b981; background: rgba(16,185,129,0.1); padding: 5px; border-radius: 4px;">
+        > status: SYSTEM_READY <br>
+        > prize: 5000 XP
+    </div>
+</div>
+
+<style>
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.5); opacity: 0.5; }
+    100% { transform: scale(1); opacity: 1; }
+}
+</style>
+
+    </div>
+</main>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, onSnapshot, updateDoc, setDoc, collection, query, where, getDocs, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = { apiKey: "AIzaSyAPDnqtVz3WqAj9sLBLDA0VnOzQ_pR0k", authDomain: "ownproject-52911.firebaseapp.com", projectId: "ownproject-52911" };
+    const db = getFirestore(initializeApp(firebaseConfig));
+    const myName = localStorage.getItem('current_session_user');
+
+    // --- 🛡️ INITIALIZATION & SECURITY CHECK ---
+    async function init() {
+        if(!myName) { window.location.href="index.html"; return; }
+        const q = query(collection(db, "elite_units"), where("name", "==", myName));
+        onSnapshot(q, (snapshot) => {
+            if (snapshot.empty) { window.location.href = "index.html"; return; }
+            const userData = snapshot.docs[0].data();
+            if (userData.in_arena !== 'yes') { window.location.href = "ellite.html"; return; }
+            document.body.style.display = "block";
+            document.getElementById('uPfp').src = userData.photo || `https://api.dicebear.com/7.x/bottts/svg?seed=${myName}`;
+        });
+        startSyncListeners();
+    }
+
+    async function getPic(name) {
+        if(!name || name === "EMPTY") return "https://api.dicebear.com/7.x/bottts/svg?seed=empty";
+        const q = query(collection(db, "elite_units"), where("name", "==", name));
+        const s = await getDocs(q);
+        return (!s.empty) ? s.docs[0].data().photo : `https://api.dicebear.com/7.x/bottts/svg?seed=${name}`;
+    }
+
+    function startSyncListeners() {
+        // --- ⚔️ 1V1 SYNC (LOCKED & WATCH SECURED) ---
+        onSnapshot(doc(db, "active_matches", "1v1"), async (snap) => {
+            const d = snap.data(); if(!d) return;
+            const joinBtn = document.getElementById('join-1v1');
+            const watchBtn = document.getElementById('watch-1v1');
+            const missionTxt = document.getElementById('mission-1v1');
+
+            if(d.status === 'waiting' || !d.task_desc) {
+                missionTxt.innerText = "Awaiting Admin Deployment...";
+                joinBtn.disabled = true; joinBtn.innerText = "LOCKED";
+                watchBtn.style.opacity = "0.5";
+            } else {
+                missionTxt.innerText = d.task_desc;
+                joinBtn.disabled = (d.player1 && d.player2);
+                joinBtn.innerText = (d.player1 && d.player2) ? "MATCH FULL" : "JOIN DUEL";
+                watchBtn.style.opacity = "1";
+            }
+
+            document.getElementById('1v1-p1-name').innerText = d.player1 || "EMPTY";
+            document.getElementById('1v1-p1-img').src = await getPic(d.player1);
+            document.getElementById('1v1-p2-name').innerText = d.player2 || "EMPTY";
+            document.getElementById('1v1-p2-img').src = await getPic(d.player2);
+
+            if(d.status === 'live' && d.player1 && d.player2 && (myName === d.player1 || myName === d.player2)) {
+                window.location.href = "newbattel.html";
+            }
+        });
+
+        // --- 🛡️ 3V3 SYNC (LOCKED & WATCH SECURED) ---
+        onSnapshot(doc(db, "active_matches", "team"), (snap) => {
+            const d = snap.data(); if(!d) return;
+            const btnA = document.getElementById('btn-a');
+            const btnD = document.getElementById('btn-d');
+            const watchBtn = document.getElementById('watch-3v3');
+            const missionTxt = document.getElementById('mission-3v3');
+            const alpha = d.alpha_players || [];
+            const delta = d.delta_players || [];
+
+            if(d.status === 'waiting' || !d.task_desc) {
+                missionTxt.innerText = "SQUAD MISSION LOCKED";
+                btnA.disabled = true; btnA.innerText = "LOCKED";
+                btnD.disabled = true; btnD.innerText = "LOCKED";
+                watchBtn.style.opacity = "0.5";
+            } else {
+                missionTxt.innerText = d.task_desc;
+                btnA.disabled = false; btnD.disabled = false;
+                watchBtn.style.opacity = "1";
+                
+                if(alpha.includes(myName)) {
+                    btnA.innerText = "LEAVE"; btnA.className = "btn-sq btn-leave"; btnD.style.visibility = "hidden";
+                } else if(delta.includes(myName)) {
+                    btnD.innerText = "LEAVE"; btnD.className = "btn-sq btn-leave"; btnA.style.visibility = "hidden";
+                } else {
+                    btnA.innerText = "JOIN ALPHA"; btnA.className = "btn-sq"; btnA.style.visibility = "visible";
+                    btnD.innerText = "JOIN DELTA"; btnD.className = "btn-sq"; btnD.style.visibility = "visible";
+                }
+            }
+            document.getElementById('a-count').innerText = `${alpha.length}/3`;
+            document.getElementById('d-count').innerText = `${delta.length}/3`;
+            
+            if(d.status === 'live' && alpha.length === 3 && delta.length === 3) {
+                if(alpha.includes(myName) || delta.includes(myName)) window.location.href = "Battlefield3v3.html";
+            }
+        });
+
+        // --- 🔑 PRIVATE MISSION SYNC ---
+        onSnapshot(doc(db, "settings", "global"), (snap) => {
+            const mission = snap.data()?.private_mission;
+            const createBtn = document.getElementById('btn-create-private');
+            if(!mission) { createBtn.disabled = true; createBtn.innerText = "LOCKED"; }
+            else { createBtn.disabled = false; createBtn.innerText = "CREATE ROOM"; }
+        });
+    }
+
+    // --- 👁️ SECURE WATCH ACTIONS (Full Check) ---
+    window.watchMatch = async (url) => {
+        const type = url.includes('3v3') ? 'team' : '1v1';
+        const s = await getDoc(doc(db, "active_matches", type));
+        const d = s.data();
+
+        if (type === '1v1') {
+            if (d.player1 && d.player2) window.location.href = url;
+            else alert("⚠️ Match hasn't started! Waiting for both players...");
+        } else {
+            if (d.alpha_players?.length === 3 && d.delta_players?.length === 3) window.location.href = url;
+            else alert("⚠️ Squads not ready! Waiting for all 6 players...");
+        }
+    };
+
+    window.watchPrivate = () => {
+        const code = prompt("Enter Room Code:").toUpperCase();
+        if(code) window.location.href = `newbattel.html?room=${code}`;
+    };
+
+    // --- ⚔️ JOIN/TOGGLE LOGIC ---
+    window.joinMatch = async (id) => {
+        const ref = doc(db, "active_matches", id);
+        const s = await getDoc(ref);
+        if(s.data().status === 'waiting') return alert("Admin has not started this match!");
+        if(!s.data().player1) await updateDoc(ref, { player1: myName });
+        else if(!s.data().player2 && s.data().player1 !== myName) await updateDoc(ref, { player2: myName });
+    };
+
+    window.toggleSquad = async (team) => {
+        const ref = doc(db, "active_matches", "team");
+        const s = await getDoc(ref);
+        if(s.data().status === 'waiting') return;
+        const squadKey = team === 'alpha' ? 'alpha_players' : 'delta_players';
+        const otherKey = team === 'alpha' ? 'delta_players' : 'alpha_players';
+        if(s.data()[otherKey]?.includes(myName)) return;
+        if(s.data()[squadKey]?.includes(myName)) await updateDoc(ref, { [squadKey]: arrayRemove(myName) });
+        else if(s.data()[squadKey].length < 3) await updateDoc(ref, { [squadKey]: arrayUnion(myName) });
+    };
+
+    window.createPrivate = async () => {
+        const s = await getDoc(doc(db, "settings", "global"));
+        if(!s.data()?.private_mission) return alert("Admin mission required!");
+        const roomCode = Math.random().toString(36).substring(2, 7).toUpperCase();
+        await setDoc(doc(db, "private_rooms", roomCode), {
+            mission: s.data().private_mission, player1: myName, player2: null, status: 'waiting', created_at: Date.now()
+        });
+        alert(`ROOM CREATED! Code: ${roomCode}`);
+    };
+
+    window.joinPrivate = async () => {
+        const code = prompt("Enter Code:").toUpperCase();
+        if(!code) return;
+        const ref = doc(db, "private_rooms", code);
+        const s = await getDoc(ref);
+        if(s.exists() && !s.data().player2) {
+            await updateDoc(ref, { player2: myName, status: 'live' });
+            window.location.href = `battlefield.html?room=${code}`;
+        } else alert("Invalid Code or Room Full!");
+    };
+
+    init();
+</script>
+</body>
+</html>

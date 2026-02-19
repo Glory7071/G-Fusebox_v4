@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3v3 Squad Siege | Elite Arena</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        :root { 
+            --bg: #f8fafc; --text: #1e293b; --card: #ffffff;
+            --alpha: #4f46e5; --delta: #ef4444; --border: #e2e8f0; --gold: #f59e0b;
+        }
+
+        /* 🌙 NAVY BLUE DARK MODE */
+        body.dark-mode {
+            --bg: #020617; --text: #f1f5f9; --card: #0f172a; --border: #1e293b;
+        }
+
+        * { margin:0; padding:0; box-sizing: border-box; -webkit-user-select: none; user-select: none; transition: background 0.3s, border 0.3s; }
+        body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; overflow-x: hidden; }
+
+        .hackathon-banner { background: #000; color: #fff; text-align: center; font-size: 10px; font-weight: 800; padding: 6px; letter-spacing: 2px; }
+
+        .battle-header { 
+            background: var(--card); padding: 12px 5%; border-bottom: 2px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center; position: sticky; top:0; z-index: 100;
+        }
+
+        .theme-btn {
+            background: var(--alpha); color: white; border: none; padding: 8px 14px; 
+            border-radius: 10px; cursor: pointer; font-size: 11px; font-weight: 800;
+        }
+
+        /* 🎰 BETTING OVERLAY */
+        #bet-overlay {
+            position: fixed; inset: 0; background: rgba(2, 6, 23, 0.95);
+            z-index: 2000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(10px);
+        }
+        .bet-card {
+            background: var(--card); padding: 30px; border-radius: 24px; border: 1px solid var(--border);
+            text-align: center; width: 90%; max-width: 400px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        .main-arena { display: flex; flex-direction: column; padding: 10px; gap: 15px; }
+        
+        .arena-grid { display: flex; flex-direction: column; gap: 15px; }
+        @media (min-width: 1024px) {
+            .arena-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: 60vh; }
+        }
+
+        .team-box { 
+            background: var(--card); border-radius: 24px; border: 2px solid var(--border); 
+            display: flex; flex-direction: column; 
+            min-height: 85vh; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03); overflow: hidden;
+        }
+        @media (min-width: 1024px) { .team-box { min-height: unset; } }
+
+        .team-box.alpha { border-top: 5px solid var(--alpha); }
+        .team-box.delta { border-top: 5px solid var(--delta); }
+
+        .team-info-bar { padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; font-size: 11px; font-weight: 800; background: rgba(0,0,0,0.02); border-bottom: 1px solid var(--border); }
+        .vote-btn { padding: 6px 15px; border-radius: 8px; border: none; cursor: pointer; background: var(--gold); color: white; display: none; font-weight: 800; }
+
+        .editor-container { flex: 1; }
+        textarea { 
+            width: 100%; height: 100%; padding: 20px; border: none; outline: none;
+            font-family: 'Fira Code', monospace; font-size: 15px; color: var(--text); resize: none;
+            background: transparent; -webkit-user-select: text; user-select: text;
+        }
+
+        .preview-section { background: var(--border); border-radius: 24px; border: 2px solid var(--border); overflow: hidden; margin-top: 10px; }
+        .preview-section.full-view { position: fixed; inset: 0; z-index: 9999; border-radius: 0; background: var(--bg); }
+        
+        iframe { width: 96%; height: 350px; border: none; background: #fff; margin: 15px auto; display: block; border-radius: 12px; }
+        .full-view iframe { height: calc(100vh - 60px); width: 98%; }
+
+        .preview-header { padding: 12px 20px; background: var(--card); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+
+        .company-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin-top: 20px; padding-bottom: 40px; }
+        .comp-card { background: var(--card); padding: 25px; border-radius: 24px; border: 1px solid var(--border); }
+
+        #victory-screen { position: fixed; inset: 0; background: var(--card); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 10000; text-align: center; }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+<div id="bet-overlay">
+    <div class="bet-card">
+        <h2 style="color:var(--gold)">BATTLE PREDICTION</h2>
+        <p style="margin: 10px 0; font-size: 14px; opacity: 0.8;">Choose your side and invest points. Winners get 2x return!</p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
+            <button onclick="handleBet('alpha')" style="padding:15px; background:var(--alpha); color:white; border:none; border-radius:12px; font-weight:800; cursor:pointer;">TEAM ALPHA</button>
+            <button onclick="handleBet('delta')" style="padding:15px; background:var(--delta); color:white; border:none; border-radius:12px; font-weight:800; cursor:pointer;">TEAM DELTA</button>
+        </div>
+        <button onclick="document.getElementById('bet-overlay').style.display='none'" style="margin-top:20px; background:none; border:none; color:var(--text); cursor:pointer; font-weight:800;">SKIP & WATCH</button>
+    </div>
+</div>
+
+<div class="hackathon-banner">⚔️ ELITE HACKATHON: SQUAD SIEGE 3v3 ⚔️</div>
+
+<div id="victory-screen">
+    <div style="font-size: 80px;">🏆</div>
+    <h1 id="winner-name" style="font-size: 3rem;">TEAM ALPHA WINS!</h1>
+    <button onclick="location.reload()" style="margin-top:20px; padding:15px 40px; border-radius:15px; border:none; background:var(--alpha); color:white; font-weight:800; cursor:pointer;">RETURN</button>
+</div>
+
+<header class="battle-header">
+    <div style="font-weight: 900; font-size: 1.2rem;">ELITE<span style="color:var(--alpha)">BATTLE</span></div>
+    <div style="display: flex; gap: 10px; align-items: center;">
+        <button class="theme-btn" onclick="toggleTheme()" id="t-btn">🌙 Dark</button>
+        <div id="timer" style="font-family:'Fira Code'; font-weight:900; color:var(--delta); background:rgba(239,68,68,0.1); padding:8px 15px; border-radius:12px;">10:00</div>
+    </div>
+</header>
+
+<main class="main-arena">
+    <div class="arena-grid">
+        <div class="team-box alpha">
+            <div class="team-info-bar">
+                <span id="alpha-count" style="color:var(--alpha)">PLAYERS: 0/3</span>
+                <span>ALPHA <span id="v-alpha">(0)</span></span>
+                <button onclick="vote('alpha')" id="btn-v-alpha" class="vote-btn">VOTE ALPHA</button>
+            </div>
+            <div class="editor-container"><textarea id="alpha-code" placeholder="HTML Team..."></textarea></div>
+        </div>
+
+        <div class="team-box delta">
+            <div class="team-info-bar">
+                <button onclick="vote('delta')" id="btn-v-delta" class="vote-btn">VOTE DELTA</button>
+                <span>DELTA <span id="v-delta">(0)</span></span>
+                <span id="delta-count" style="color:var(--delta)">PLAYERS: 0/3</span>
+            </div>
+            <div class="editor-container"><textarea id="delta-code" placeholder="CSS Team..."></textarea></div>
+        </div>
+    </div>
+
+    <div class="preview-section" id="preview-wrap">
+        <div class="preview-header">
+            <span style="font-size:12px; font-weight:900;">⚡ LIVE ARENA VIEW</span>
+            <button style="background:var(--text); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;" onclick="toggleFull()">FULLSCREEN</button>
+        </div>
+        <iframe id="live-preview"></iframe>
+    </div>
+
+    <div class="company-grid">
+        <div class="comp-card"><h4>Elite Solutions</h4><p>Architecting the future of coding.</p></div>
+        <div class="comp-card"><h4>Hackers Alliance</h4><p>Global collective of elite devs.</p></div>
+        <div class="comp-card"><h4>Dev Forge</h4><p>Forging next-gen warriors.</p></div>
+    </div>
+</main>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, doc, onSnapshot, updateDoc, collection, query, where, getDocs, arrayUnion, getDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = { apiKey: "AIzaSyAPDnqtVz3WqAj9sLBLDA0VnOzQ_pR0k", authDomain: "ownproject-52911.firebaseapp.com", projectId: "ownproject-52911" };
+    const db = getFirestore(initializeApp(firebaseConfig));
+
+    const alphaEditor = document.getElementById('alpha-code');
+    const deltaEditor = document.getElementById('delta-code');
+    const preview = document.getElementById('live-preview');
+    const myName = localStorage.getItem('current_session_user');
+
+    window.toggleTheme = () => {
+        const isDark = document.body.classList.toggle('dark-mode');
+        document.getElementById('t-btn').innerText = isDark ? "☀️ Light" : "🌙 Dark";
+    };
+
+    window.toggleFull = () => document.getElementById('preview-wrap').classList.toggle('full-view');
+
+    // 🎰 BETTING LOGIC
+    window.handleBet = async (side) => {
+        const amount = parseInt(prompt("Enter Bet Amount (Min 50 Points):", "10"));
+        if(!amount || amount < 50) return;
+        const q = query(collection(db, "elite_units"), where("name", "==", myName));
+        const snap = await getDocs(q);
+        if(!snap.empty && snap.docs[0].data().points >= amount) {
+            await updateDoc(doc(db, "elite_units", snap.docs[0].id), { points: increment(-amount) });
+            await updateDoc(doc(db, "active_matches", "team"), { [`betters.${myName}`]: { side: side, amount: amount } });
+            alert("Bet Placed!");
+            document.getElementById('bet-overlay').style.display = 'none';
+        } else { alert("Insufficient points!"); }
+    };
+
+    // ⭐ VOTE LOGIC
+    window.vote = async (team) => {
+        const s = await getDoc(doc(db, "active_matches", "team"));
+        const d = s.data();
+        if(d.status !== 'voting' || d.voters?.includes(myName)) return alert("Cannot vote!");
+        const members = (team === 'alpha') ? d.alpha_players : d.delta_players;
+        await updateDoc(doc(db, "active_matches", "team"), { [team === 'alpha' ? 'p1_votes' : 'p2_votes']: increment(1), voters: arrayUnion(myName) });
+        if(members) {
+            for(const p of members) {
+                const q = query(collection(db, "elite_units"), where("name", "==", p));
+                const snap = await getDocs(q);
+                if(!snap.empty) await updateDoc(doc(db, "elite_units", snap.docs[0].id), { points: increment(10) });
+            }
+        }
+        alert("Vote registered!");
+    };
+
+    // 🔄 REAL-TIME SYNC
+    // 🔄 REAL-TIME SYNC (UPDATED WITH RESET LOGIC)
+onSnapshot(doc(db, "active_matches", "team"), (snap) => {
+    if(!snap.exists()) return;
+    const d = snap.data();
+    
+    // --- RESET DETECTION ---
+    // Agar status waiting hai aur players khali hain, toh sab saaf kar do
+    if(d.status === 'waiting' && (!d.alpha_players || d.alpha_players.length === 0)) {
+        alphaEditor.value = "";
+        deltaEditor.value = "";
+        alphaEditor.readOnly = true;
+        deltaEditor.readOnly = true;
+        document.getElementById('alpha-count').innerText = `PLAYERS: 0/3`;
+        document.getElementById('delta-count').innerText = `PLAYERS: 0/3`;
+        document.getElementById('v-alpha').innerText = `(0)`;
+        document.getElementById('v-delta').innerText = `(0)`;
+        const frame = preview.contentDocument || preview.contentWindow.document;
+        frame.open(); frame.write(""); frame.close();
+        document.getElementById('victory-screen').style.display = 'none';
+        return; 
+    }
+
+    const isAlpha = d.alpha_players?.includes(myName);
+    const isDelta = d.delta_players?.includes(myName);
+    const isPlayer = isAlpha || isDelta;
+
+    // Betting Overlay Logic
+    if(d.status === 'live' && !isPlayer && !d.betters?.[myName]) {
+        document.getElementById('bet-overlay').style.display = 'flex';
+    } else { document.getElementById('bet-overlay').style.display = 'none'; }
+
+    document.getElementById('alpha-count').innerText = `PLAYERS: ${d.alpha_players?.length || 0}/3`;
+    document.getElementById('delta-count').innerText = `PLAYERS: ${d.delta_players?.length || 0}/3`;
+    document.getElementById('v-alpha').innerText = `(${d.p1_votes || 0})`;
+    document.getElementById('v-delta').innerText = `(${d.p2_votes || 0})`;
+
+    document.querySelectorAll('.vote-btn').forEach(b => b.style.display = (d.status === 'voting' && !isPlayer) ? 'block' : 'none');
+
+    // Editor Update (Sync only if not typing)
+    if (document.activeElement !== alphaEditor) alphaEditor.value = d.alpha_code || "";
+    if (document.activeElement !== deltaEditor) deltaEditor.value = d.delta_code || "";
+    
+    alphaEditor.readOnly = !isAlpha;
+    deltaEditor.readOnly = !isDelta;
+
+    const frame = preview.contentDocument || preview.contentWindow.document;
+    frame.open(); 
+    frame.write((d.alpha_code || "") + "<style>" + (d.delta_code || "") + "</style>"); 
+    frame.close();
+
+    if(d.winner) {
+        document.getElementById('victory-screen').style.display = 'flex';
+        document.getElementById('winner-name').innerText = d.winner.toUpperCase() + " WINS!";
+    } else { document.getElementById('victory-screen').style.display = 'none'; }
+});
+
+    alphaEditor.addEventListener('input', e => updateDoc(doc(db, "active_matches", "team"), { alpha_code: e.target.value }));
+    deltaEditor.addEventListener('input', e => updateDoc(doc(db, "active_matches", "team"), { delta_code: e.target.value }));
+</script>
+</body>
+</html>

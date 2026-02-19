@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>G-Fuse Box | Stealth Ops</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --kali-green: #2ecc71; --kali-blue: #3498db; --kali-red: #e74c3c; --bg: #050505; }
+        * { margin:0; padding:0; box-sizing: border-box; }
+        body { background: var(--bg); color: var(--kali-green); font-family: 'Fira Code', monospace; height: 100dvh; overflow: hidden; position: fixed; width: 100%; transition: background 0.3s; }
+
+        /* HEADER */
+        .system-header { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 50px;
+            background: #111; border-bottom: 1px solid #333; 
+            display: flex; align-items: center; justify-content: space-between; padding: 0 15px; z-index: 1000; 
+        }
+        .header-left { color: var(--kali-red); font-weight: bold; font-size: 13px; }
+        .header-right { color: #f1c40f; font-weight: bold; font-size: 12px; }
+
+        .help-hint { 
+            position: fixed; top: 55px; left: 15px; font-size: 10px; color: #f1c40f; z-index: 999; 
+            background: rgba(241, 196, 15, 0.05); padding: 2px 5px;
+        }
+
+        #terminal-container {
+            margin-top: 50px; height: calc(100dvh - 50px);
+            overflow-y: auto; padding: 35px 15px 300px 15px; 
+            display: flex; flex-direction: column; gap: 6px;
+        }
+        .terminal-line { display: flex; align-items: flex-start; gap: 8px; font-size: 14px; }
+        .prompt { color: var(--kali-blue); font-weight: bold; }
+        .input-field { background: transparent; border: none; color: #fff; font-family: 'Fira Code', monospace; font-size: 14px; outline: none; flex: 1; }
+
+        /* ATTACK ALERTS */
+        .under-attack { animation: shake 0.15s infinite; background: rgba(231, 76, 60, 0.2) !important; }
+        @keyframes shake { 0%{transform:translateX(3px)} 50%{transform:translateX(-3px)} }
+
+        .hacked-card { background: rgba(46, 204, 113, 0.1); border: 1px solid var(--kali-green); padding: 10px; margin: 10px 0; border-radius: 8px; display: flex; align-items: center; gap: 12px; width: fit-content;}
+        .hacked-img { width: 50px; height: 50px; border-radius: 4px; object-fit: cover; }
+        
+        .output { font-size: 13px; line-height: 1.4; }
+        .danger { color: var(--kali-red); font-weight: bold; }
+        .success { color: var(--kali-green); }
+        .warning { color: #f1c40f; }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <header class="system-header">
+        <div class="header-left">💀 OPS: <span id="u-name" style="color:var(--kali-blue)">...</span></div>
+        <div class="header-right">CORE XP: <span id="pts">0</span></div>
+    </header>
+    
+    <div class="help-hint">CMD: scan-all | breach-unit [Name] | clear</div>
+
+    <div id="terminal-container" onclick="document.getElementById('user-input').focus()">
+        <div id="history-box"></div>
+        <div class="terminal-line">
+            <span class="prompt">root@GFuse:~#</span>
+            <input type="text" class="input-field" id="user-input" autofocus autocomplete="off" spellcheck="false">
+        </div>
+    </div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, doc, onSnapshot, setDoc, updateDoc, getDocs, collection, query, where, getDoc, deleteField, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = { apiKey: "AIzaSyAPDnqtVz3WqAj9sLBLDA0VnOzQ_pR0k", projectId: "ownproject-52911" };
+    const db = getFirestore(initializeApp(firebaseConfig));
+    
+    // --- SECURITY ACCESS KEY ---
+    const T_KEY = "G-FUSE-77"; 
+
+    let myName = localStorage.getItem('current_session_user') || "Ghost";
+    let myCurrentTarget = "";
+    const historyBox = document.getElementById('history-box');
+    const input = document.getElementById('user-input');
+    const container = document.getElementById('terminal-container');
+
+    let duelMode = false;
+    let duelCode = "";
+    let targetID = ""; 
+
+    async function init() {
+        document.getElementById('u-name').innerText = myName;
+        
+        // Register Node with Terminal Key
+        await setDoc(doc(db, "cyber_war", myName), { 
+            last_seen: Date.now(),
+            status: "IDLE",
+            terminal_key: T_KEY 
+        }, { merge: true });
+
+        assignNewTarget();
+        setInterval(assignNewTarget, 180000);
+
+        setInterval(() => {
+            setDoc(doc(db, "cyber_war", myName), { 
+                last_seen: Date.now(),
+                terminal_key: T_KEY 
+            }, { merge: true });
+        }, 5000);
+    }
+
+    async function assignNewTarget() {
+        const snap = await getDocs(collection(db, "cyber_war"));
+        let onlineUsers = [];
+        snap.forEach(d => {
+            if(d.data().last_seen > Date.now() - 20000 && d.id !== myName) onlineUsers.push(d.id);
+        });
+        if(onlineUsers.length > 0) {
+            myCurrentTarget = onlineUsers[Math.floor(Math.random() * onlineUsers.length)];
+            print("\n[!] NETWORK ENCRYPTION ROTATED. NEW TARGET VULNERABLE.", "warning");
+        }
+    }
+
+    async function updateXP(pts) {
+        const q = query(collection(db, "elite_units"), where("name", "==", myName));
+        const usnap = await getDocs(q);
+        if(!usnap.empty) {
+            await updateDoc(doc(db, "elite_units", usnap.docs[0].id), { 
+                points: increment(pts),
+                terminal_key: T_KEY 
+            });
+        }
+    }
+
+    function print(text, type = '', isHTML = false) {
+        const div = document.createElement('div');
+        div.className = `output ${type}`;
+        if(isHTML) div.innerHTML = text; else div.innerText = text;
+        historyBox.appendChild(div);
+        container.scrollTop = container.scrollHeight;
+    }
+
+    input.addEventListener('keydown', async (e) => {
+        if (e.key === 'Enter') {
+            const val = input.value.trim();
+            input.value = '';
+            if(!val) return;
+
+            print(`<span class="prompt">root@GFuse:~#</span> ${val}`, '', true);
+
+            if (duelMode) {
+                if (val.toUpperCase() === duelCode) {
+                    const activeTarget = (targetID !== "") ? targetID : myName;
+                    const duelRef = doc(db, "cyber_war", activeTarget);
+                    const snap = await getDoc(duelRef);
+                    
+                    if(snap.exists() && !snap.data().winner) {
+                        await updateDoc(duelRef, { 
+                            winner: myName,
+                            terminal_key: T_KEY 
+                        });
+
+                        if(targetID !== "") {
+                            print("[+] BREACH SUCCESSFUL. +100 CORE XP SECURED.", "success");
+                            await updateXP(100);
+                            const tQ = query(collection(db, "elite_units"), where("name", "==", targetID));
+                            const tSnap = await getDocs(tQ);
+                            if(!tSnap.empty) {
+                                const tData = tSnap.docs[0].data();
+                                print(`<div class="hacked-card"><img src="${tData.photo}" class="hacked-img"><div><b>${tData.name}</b><br><span class="danger">SYSTEM BREACHED</span></div></div>`, '', true);
+                            }
+                            assignNewTarget();
+                        } else {
+                            print("[+] COUNTER-MEASURE SUCCESSFUL. ATTACK REPELLED.", "success");
+                        }
+                    }
+                } else {
+                    print("[!] INVALID CODE. FIREWALL STRENGTHENING...", "danger");
+                }
+                duelMode = false; targetID = ""; 
+                return;
+            }
+
+            const args = val.toLowerCase().split(' ');
+            
+            if (args[0] === 'scan-all') {
+                const snap = await getDocs(collection(db, "cyber_war"));
+                print("--- SCANNING LIVE NODES ---", "warning");
+                snap.forEach(d => {
+                    if(d.data().last_seen > Date.now() - 30000 && d.id !== myName) {
+                        print(`> NODE_ID: ${d.id} [ONLINE]`, "success");
+                    }
+                });
+            } 
+            else if (args[0] === 'breach-unit') {
+                const guess = args[1];
+                if(!guess) return print("[!] Usage: breach-unit [Name]", "warning");
+
+                const tRef = doc(db, "cyber_war", guess);
+                const tSnap = await getDoc(tRef);
+
+                if(!tSnap.exists() || tSnap.data().last_seen < Date.now() - 30000) {
+                    return print("[!] NODE OFFLINE OR UNKNOWN.", "danger");
+                }
+
+                if(guess.toLowerCase() === myCurrentTarget.toLowerCase()) {
+                    duelCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+                    targetID = guess; 
+                    duelMode = true;
+                    print(`[+] TARGET IDENTIFIED! ENCRYPTING... CODE: ${duelCode}`, "success");
+                    await updateDoc(tRef, { 
+                        status: "UNDER_ATTACK", attacker: myName, code: duelCode, winner: null,
+                        terminal_key: T_KEY 
+                    });
+                } else {
+                    print(`[!] ACCESS DENIED: Target is not vulnerable.`, "danger");
+                    print(`[-] SECURITY TRACEBACK: -30 CORE XP`, "danger");
+                    await updateXP(-30);
+                    assignNewTarget(); 
+                }
+            }
+            else if (args[0] === 'clear') historyBox.innerHTML = '';
+            else if (args[0] === 'whoami') print(myName, "success");
+        }
+    });
+
+    onSnapshot(doc(db, "cyber_war", myName), async (s) => {
+        const d = s.data();
+        if(!d) return;
+
+        if(d.status === "UNDER_ATTACK" && !d.winner) {
+            document.body.classList.add('under-attack');
+            duelMode = true; duelCode = d.code; targetID = ""; 
+            print(`\n[!!!] SYSTEM BREACH DETECTED! TYPE CODE TO DEFEND: ${duelCode}`, "danger");
+        } 
+        else if (d.winner) {
+            document.body.classList.remove('under-attack');
+            if(d.winner !== myName) {
+                print(`[!] HACKED BY ${d.winner.toUpperCase()}. PENALTY: -10 XP`, "danger");
+                await updateXP(-10);
+                setTimeout(() => {
+                    updateDoc(doc(db, "cyber_war", myName), { 
+                        status: "IDLE", 
+                        winner: deleteField(),
+                        terminal_key: T_KEY 
+                    });
+                }, 2000);
+            }
+            duelMode = false;
+        }
+    });
+
+    onSnapshot(query(collection(db, "elite_units"), where("name", "==", myName)), (s) => {
+        if(!s.empty) document.getElementById('pts').innerText = s.docs[0].data().points || 0;
+    });
+
+    init();
+</script>
+</body>
+</html>
