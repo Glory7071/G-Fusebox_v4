@@ -234,6 +234,7 @@
     </footer>
 
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -253,41 +254,61 @@
 
     window.toggleMenu = () => { document.getElementById('navLinks').classList.toggle('active'); };
 
-    // --- FIX 1: UNIQUE USER IDENTIFICATION ---
-    // User Agent ki jagah Unique Random ID jo browser mein save rahegi
+    // --- 1. UNIQUE ID GENERATION (Overwriting Fix) ---
     let sysId = localStorage.getItem('g_fusebox_uid');
     if (!sysId) {
-        sysId = 'elite_' + Math.random().toString(36).substr(2, 9) + Date.now();
+        sysId = 'ELITE_' + Math.random().toString(36).substr(2, 9) + Date.now();
         localStorage.setItem('g_fusebox_uid', sysId);
     }
 
-    // --- SECURITY: CHAT LOCK & FORM HIDE ---
+    // --- 2. ARENA NAVIGATION GUARD (Code Wars Security) ---
+    window.enterArena = async (e) => {
+        if(e) e.preventDefault();
+        
+        const q = query(collection(db, "elite_units"), where("deviceId", "==", sysId));
+        const snap = await getDocs(q);
+
+        if (snap.empty) {
+            alert("🚫 UNKNOWN UNIT: Please register via 'Plug into Grid' form first.");
+        } else {
+            const u = snap.docs[0].data();
+            if (u.in_arena === "yes") {
+                window.location.href = "newerena.html";
+            } else {
+                alert("⏳ ACCESS PENDING: Lead Architect Gaurav Yadav has not approved your unit for the War Room yet.");
+            }
+        }
+    };
+
+    // --- 3. AUTO-LOCK & PROFILE SYNC ---
     const checkLock = async () => {
         const q = query(collection(db, "elite_units"), where("deviceId", "==", sysId));
         const snap = await getDocs(q);
+        
         if (!snap.empty) {
             const u = snap.docs[0].data();
             localStorage.setItem('current_session_user', u.name);
-            
-            // UNLOCK CHAT
-            document.getElementById('chatInp').disabled = false;
-            document.getElementById('chatInp').placeholder = "Type message...";
-            document.getElementById('chatBtn').disabled = false;
+
+            if(u.in_arena === "yes") {
+                document.getElementById('chatInp').disabled = false;
+                document.getElementById('chatInp').placeholder = "Secure link active...";
+                document.getElementById('chatBtn').disabled = false;
+            }
 
             document.getElementById('sidebarBox').innerHTML = `
                 <div style="text-align:center; padding: 20px 0;">
-                    <div style="width:80px; height:80px; border-radius:50%; border:3px solid var(--primary); margin:0 auto 10px; overflow:hidden;">
+                    <div style="width:70px; height:70px; border-radius:50%; border:2px solid var(--primary); margin:0 auto 10px; overflow:hidden;">
                         <img src="${u.photo}" style="width:100%; height:100%; object-fit:cover;">
                     </div>
-                    <h3 style="color:var(--primary); font-weight:800;">SYSTEM ACTIVE</h3>
+                    <h3 style="color:var(--primary); font-weight:800;">${u.in_arena === 'yes' ? 'SYSTEM ACTIVE' : 'PENDING'}</h3>
                     <p>Welcome, <b>${u.name}</b></p><br>
-                    <a href="update.html" class="boot-btn">MY PROFILE</a>
+                    <a href="ellite.html" class="boot-btn">MY PROFILE</a>
                 </div>`;
         }
     };
     checkLock();
 
-    // --- CHAT LOGIC (FIX 2: GROUP CHAT VISIBILITY) ---
+    // --- 4. PRIVATE CHAT LOGIC (1-to-1) ---
     window.sendSecureMsg = async () => {
         const user = localStorage.getItem('current_session_user');
         const inp = document.getElementById('chatInp');
@@ -296,7 +317,7 @@
             sender: user, 
             msg: btoa(inp.value), 
             time: Date.now(),
-            uid: sysId // For identification
+            deviceId: sysId 
         });
         inp.value = '';
     };
@@ -308,29 +329,21 @@
         box.innerHTML = '';
         snap.forEach(doc => {
             const c = doc.data();
-            // Ab sabka message dikhega, bas "Mera" blue aur "Admin" dark dikhega
-            const isMe = (c.sender === me);
-            const isAdmin = (c.sender === "🛡️ ADMIN");
-            
-            let style = 'background:#e2e8f0; color:black; margin-right:auto;'; // Default others
-            if(isMe) style = 'margin-left:auto; background:var(--primary); color:white;';
-            if(isAdmin) style = 'margin: 5px auto; background:var(--dark); color:gold; border:1px solid gold;';
-
-            box.innerHTML += `
-                <div style="max-width:85%; padding:10px; border-radius:12px; margin-bottom:10px; font-size:0.8rem; width:fit-content; ${style}">
-                    <strong style="font-size:0.6rem; opacity:0.8;">${c.sender}</strong><br>
-                    ${atob(c.msg)}
-                </div>`;
+            // Sirf apna ya admin ka message dikhega
+            if(c.sender === me || c.sender === "🛡️ ADMIN") {
+                const style = (c.sender === me) ? 'margin-left:auto; background:var(--primary); color:white;' : 'background:#eee; color:black;';
+                box.innerHTML += `<div style="max-width:85%; padding:10px; border-radius:12px; margin-bottom:10px; font-size:0.8rem; width:fit-content; ${style}"><strong>${c.sender}</strong><br>${atob(c.msg)}</div>`;
+            }
         });
         box.scrollTop = box.scrollHeight;
     });
 
-    // --- ANNOUNCEMENT ---
+    // --- 5. ANNOUNCEMENTS ---
     onSnapshot(query(collection(db, "announcements"), orderBy("time", "desc"), limit(1)), (snap) => {
         if(!snap.empty) { document.getElementById('annText').innerText = snap.docs[0].data().msg; }
     });
 
-    // --- IMAGE PREVIEW ---
+    // --- 6. IMAGE PREVIEW ---
     document.getElementById('userImg').onchange = e => {
         const reader = new FileReader();
         reader.onload = ev => {
@@ -341,7 +354,7 @@
         reader.readAsDataURL(e.target.files[0]);
     };
 
-    // --- REGISTRATION ---
+    // --- 7. REGISTRATION ---
     document.getElementById('regForm').onsubmit = async (e) => {
         e.preventDefault();
         const btn = document.getElementById('bootBtn');
@@ -349,31 +362,28 @@
         try {
             await addDoc(collection(db, "elite_units"), {
                 name: document.getElementById('userName').value.trim(),
-                deviceId: sysId, // Unique ID used here
+                deviceId: sysId,
                 role: document.getElementById('userRole').value,
                 contact: document.getElementById('userContact').value,
                 situation: document.getElementById('userSituation').value,
                 photo: document.getElementById('imgPreview').src,
                 points: 0, likes: 0, followers: 0, in_arena: "no", time: Date.now()
             });
+            alert("Registration Complete! Access to Code Wars will be granted after Admin verification.");
             location.reload(); 
         } catch (err) { alert(err.message); btn.disabled = false; }
     };
 
-    // --- SQUAD SYNC ---
+    // --- 8. ELITE SQUAD SYNC ---
     onSnapshot(query(collection(db, "elite_units"), orderBy("time", "desc"), limit(3)), (snap) => {
         const grid = document.getElementById('featuredGrid');
         grid.innerHTML = '';
         snap.forEach(doc => {
             const u = doc.data();
-            grid.innerHTML += `
-                <div class="member-card" data-aos="zoom-in">
-                    <img src="${u.photo}">
-                    <h4>${u.name}</h4>
-                    <p style="color:var(--primary); font-size:0.7rem; font-weight:800;">${u.role}</p>
-                </div>`;
+            grid.innerHTML += `<div class="member-card"><img src="${u.photo}"><h4>${u.name}</h4><p style="color:var(--primary); font-size:0.7rem; font-weight:800;">${u.role}</p></div>`;
         });
     });
 </script>
 </body>
 </html>
+
