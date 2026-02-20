@@ -347,41 +347,54 @@
         alert("Request Sent!");
     };
 
-    window.act = async (id, type) => {
-    if (!globalVerified) return alert("❌ ACCESS DENIED: Identity not verified!");
+    // Ek global lock variable taaki double-tap na ho
+let isProcessing = false;
+
+window.act = async (id, type) => {
+    // 1. Agar pehle se process ho raha hai, toh click ignore karo
+    if (isProcessing) return;
+    if (!globalVerified) return alert("🚫 ACCESS DENIED: Verify Unit First!");
 
     const key = `${id}_${type}`;
     const isAlreadyDone = actions[key] === true;
+    
     const v = isAlreadyDone ? -1 : 1;
     const p = isAlreadyDone ? -5 : 5;
+
+    // --- OPTIMISTIC UI UPDATE (Turant badlo) ---
+    isProcessing = true; // Lock laga do
+    
+    if (isAlreadyDone) {
+        delete actions[key];
+    } else {
+        actions[key] = true;
+    }
+    
+    localStorage.setItem('v52_acts', JSON.stringify(actions));
+    refreshGrid(); // UI turant update ho jayega bina wait kiye
 
     try {
         const unitRef = doc(db, "elite_units", id);
         
-        // Database Update
+        // Background mein Firebase update bhej rahe hain
         await updateDoc(unitRef, { 
             [type]: increment(v), 
             points: increment(p) 
         });
-
-        // Local Storage Sync
-        if (isAlreadyDone) {
-            delete actions[key];
-        } else {
-            actions[key] = true;
-        }
-        localStorage.setItem('v52_acts', JSON.stringify(actions));
         
-        // Simple Success Log (No annoying alerts for success)
-        console.log("Transmission Successful");
+        console.log("Transmission Success");
 
     } catch (e) {
-        console.error("Internal Error:", e);
-        // User-friendly "Elite" style alert
-        alert("⚠️ SIGNAL DISRUPTED: Unable to sync with Command Center. Try again, Unit!");
+        console.error("Sync Error:", e);
+        // Agar error aaye toh state wapas purani kar do (Rollback)
+        if (isAlreadyDone) actions[key] = true; else delete actions[key];
+        localStorage.setItem('v52_acts', JSON.stringify(actions));
+        refreshGrid();
+        alert("⚠️ SIGNAL FAILED: Reverted status.");
+    } finally {
+        isProcessing = false; // Lock khol do
     }
 };
-
     window.saveProfile = async () => {
         const r = document.getElementById('editRole').value;
         const f = document.getElementById('editFile').files[0];
@@ -425,3 +438,4 @@
 </body>
 
 </html>
+
