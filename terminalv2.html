@@ -83,25 +83,57 @@
     let duelCode = "";
     let targetID = ""; 
 
-    async function init() {
+
+
+    // --- SECURITY BLOCK START ---
+    async function runSecurityCheck() {
+        const screen = document.body;
+        // 1. Referrer Check (Arena se hi aana chahiye)
+        if (!document.referrer.includes("newerena") && !window.location.href.includes("bypass=true")) {
+            screen.innerHTML = `<div style="background:#000; color:#e74c3c; height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; font-family:monospace; text-align:center; padding:20px;">
+                <h1 style="font-size:50px;">🚫 ACCESS DENIED</h1>
+                <p>SECURE TUNNEL REQUIRED. PLEASE ENTER VIA THE ARENA PORTAL.</p>
+                <small style="color:#555;">Error Code: REF_BYPASS_ERR</small>
+            </div>`;
+            return false;
+        }
+        // 2. Admin Master Switch Check
+        const configSnap = await getDoc(doc(db, "settings", "terminal_config"));
+        if (configSnap.exists() && configSnap.data().status === "OFFLINE") {
+            screen.innerHTML = `<div style="background:#000; color:#f1c40f; height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; font-family:monospace; text-align:center; padding:20px;">
+                <h1 style="font-size:40px;">🔒 SYSTEM LOCKED</h1>
+                <p>TERMINAL IS CURRENTLY OFFLINE BY CENTRAL COMMAND.</p>
+                <p style="color:#555;">Try again when the match is LIVE.</p>
+            </div>`;
+            return false;
+        }
+        return true;
+    }
+    // --- SECURITY BLOCK END ---
+   async function init() {
+        // Security Check Sabse Pehle
+        const isAuthorized = await runSecurityCheck();
+        if (!isAuthorized) return; 
+
         document.getElementById('u-name').innerText = myName;
+        const userRef = doc(db, "cyber_war", myName);
         
-        // Register Node with Terminal Key
-        await setDoc(doc(db, "cyber_war", myName), { 
-            last_seen: Date.now(),
-            status: "IDLE",
-            terminal_key: T_KEY 
-        }, { merge: true });
+        const updateStatus = async () => {
+            try {
+                await setDoc(userRef, { 
+                    last_seen: Date.now(),
+                    status: "IDLE",
+                    terminal_key: T_KEY 
+                }, { merge: true });
+            } catch (e) { console.log("Heartbeat failed", e); }
+        };
 
+        await updateStatus();
+        setInterval(updateStatus, 2000); 
+
+        onSnapshot(doc(db, "cyber_war", "GLOBAL_META"), (s) => {});
         assignNewTarget();
-        setInterval(assignNewTarget, 180000);
-
-        setInterval(() => {
-            setDoc(doc(db, "cyber_war", myName), { 
-                last_seen: Date.now(),
-                terminal_key: T_KEY 
-            }, { merge: true });
-        }, 5000);
+        setInterval(assignNewTarget, 120000); 
     }
 
     async function assignNewTarget() {
@@ -115,8 +147,29 @@
             print("\n[!] NETWORK ENCRYPTION ROTATED. NEW TARGET VULNERABLE.", "warning");
         }
     }
-
+     // --- PASTE THIS START ---
+    // REAL-TIME KILL SWITCH (Bina refresh kiye lock karne ke liye)
+    onSnapshot(doc(db, "settings", "terminal_config"), (s) => {
+        const config = s.data();
+        if (config && config.status === "OFFLINE") {
+            document.body.innerHTML = `
+                <div style="background:#000; color:#f1c40f; height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; font-family:monospace; text-align:center; padding:20px;">
+                    <h1 style="font-size:40px;">⚠️ SESSION TERMINATED</h1>
+                    <p>CENTRAL COMMAND HAS TAKEN THE SYSTEM OFFLINE.</p>
+                    <p style="color:#555; margin-top:10px;">All operations suspended.</p>
+                </div>`;
+            if(input) input.disabled = true;
+        }
+    });
+    // --- PASTE THIS END ---
     async function updateXP(pts) {
+        // Check if Admin locked the system while user was inside
+        const configSnap = await getDoc(doc(db, "settings", "terminal_config"));
+        if (configSnap.exists() && configSnap.data().status === "OFFLINE") {
+            print("[!] SECURITY ALERT: Points Sync Disabled by Admin.", "danger");
+            return;
+        }
+
         const q = query(collection(db, "elite_units"), where("name", "==", myName));
         const usnap = await getDocs(q);
         if(!usnap.empty) {
@@ -156,16 +209,38 @@
                         });
 
                         if(targetID !== "") {
-                            print("[+] BREACH SUCCESSFUL. +100 CORE XP SECURED.", "success");
-                            await updateXP(100);
-                            const tQ = query(collection(db, "elite_units"), where("name", "==", targetID));
-                            const tSnap = await getDocs(tQ);
-                            if(!tSnap.empty) {
-                                const tData = tSnap.docs[0].data();
-                                print(`<div class="hacked-card"><img src="${tData.photo}" class="hacked-img"><div><b>${tData.name}</b><br><span class="danger">SYSTEM BREACHED</span></div></div>`, '', true);
-                            }
-                            assignNewTarget();
-                        } else {
+    print("[+] BREACH SUCCESSFUL. +100 CORE XP SECURED.", "success");
+    await updateXP(100);
+
+    // FIX: Laptop aur Mobile ke case difference ko khatam karne ke liye query badal di
+    const tQ = query(collection(db, "elite_units")); 
+    const tSnap = await getDocs(tQ);
+    
+    let foundData = null;
+    tSnap.forEach(doc => {
+        // Dono ko lowercase karke match karo
+        if(doc.data().name.toLowerCase() === targetID.toLowerCase()) {
+            foundData = doc.data();
+        }
+    });
+
+    if(foundData) {
+        print(`
+            <div class="hacked-card">
+                <img src="${foundData.photo}" class="hacked-img" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=fallback'">
+                <div>
+                    <b>${foundData.name.toUpperCase()}</b><br>
+                    <span class="danger">SYSTEM BREACHED</span><br>
+                    <small style="color:var(--kali-blue)">DATA EXFILTRATED...</small>
+                </div>
+            </div>
+        `, '', true);
+    } else {
+        // Agar photo na mile toh purana simple message
+        print(`[+] NODE ${targetID.toUpperCase()} COMPROMISED.`, "success");
+    }
+    assignNewTarget();
+} else {
                             print("[+] COUNTER-MEASURE SUCCESSFUL. ATTACK REPELLED.", "success");
                         }
                     }
@@ -182,38 +257,62 @@
                 const snap = await getDocs(collection(db, "cyber_war"));
                 print("--- SCANNING LIVE NODES ---", "warning");
                 snap.forEach(d => {
-                    if(d.data().last_seen > Date.now() - 30000 && d.id !== myName) {
+                    if(d.data().last_seen > Date.now() - 60000 && d.id !== myName) {
                         print(`> NODE_ID: ${d.id} [ONLINE]`, "success");
                     }
                 });
             } 
             else if (args[0] === 'breach-unit') {
-                const guess = args[1];
-                if(!guess) return print("[!] Usage: breach-unit [Name]", "warning");
+    const guess = args[1];
+    if(!guess) return print("[!] Usage: breach-unit [Name]", "warning");
 
-                const tRef = doc(db, "cyber_war", guess);
-                const tSnap = await getDoc(tRef);
+    print(`[~] SEARCHING FOR NODE: ${guess.toUpperCase()}...`, "warning");
 
-                if(!tSnap.exists() || tSnap.data().last_seen < Date.now() - 30000) {
-                    return print("[!] NODE OFFLINE OR UNKNOWN.", "danger");
-                }
+    // FIX: Laptop se Mobile ko dhoondne ke liye search query use karo
+    const q = query(collection(db, "cyber_war"));
+    const qSnap = await getDocs(q);
+    
+    let targetDoc = null;
+    let tName = "";
 
-                if(guess.toLowerCase() === myCurrentTarget.toLowerCase()) {
-                    duelCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-                    targetID = guess; 
-                    duelMode = true;
-                    print(`[+] TARGET IDENTIFIED! ENCRYPTING... CODE: ${duelCode}`, "success");
-                    await updateDoc(tRef, { 
-                        status: "UNDER_ATTACK", attacker: myName, code: duelCode, winner: null,
-                        terminal_key: T_KEY 
-                    });
-                } else {
-                    print(`[!] ACCESS DENIED: Target is not vulnerable.`, "danger");
-                    print(`[-] SECURITY TRACEBACK: -30 CORE XP`, "danger");
-                    await updateXP(-30);
-                    assignNewTarget(); 
-                }
-            }
+    // Saare documents mein dhoondo (Case ka jhagda khatam)
+    qSnap.forEach((doc) => {
+        if(doc.id.toLowerCase() === guess.toLowerCase()) {
+            targetDoc = doc.data();
+            tName = doc.id;
+        }
+    });
+
+    // Agar document mil gaya par time gap zyada hai
+    if(!targetDoc) {
+        return print(`[!] NODE ${guess.toUpperCase()} NOT FOUND.`, "danger");
+    }
+
+    if(targetDoc.last_seen < Date.now() - 90000) { // 90 sec buffer
+        return print(`[!] NODE ${tName.toUpperCase()} IS OFFLINE (LATENCY).`, "danger");
+    }
+
+    // Ab Attack Logic
+    if(tName.toLowerCase() === myCurrentTarget.toLowerCase()) {
+        duelCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+        targetID = tName; 
+        duelMode = true;
+        print(`[+] CONNECTION ESTABLISHED! CODE: ${duelCode}`, "success");
+        
+        await updateDoc(doc(db, "cyber_war", tName), { 
+            status: "UNDER_ATTACK", 
+            attacker: myName, 
+            code: duelCode, 
+            winner: null,
+            terminal_key: T_KEY 
+        });
+    } else {
+        print(`[!] ACCESS DENIED: ${tName.toUpperCase()} is not vulnerable.`, "danger");
+        print(`[-] SECURITY TRACEBACK: -30 CORE XP`, "danger");
+        await updateXP(-30);
+        assignNewTarget(); 
+    }
+}
             else if (args[0] === 'clear') historyBox.innerHTML = '';
             else if (args[0] === 'whoami') print(myName, "success");
         }
