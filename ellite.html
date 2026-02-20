@@ -348,12 +348,39 @@
     };
 
     window.act = async (id, type) => {
-        const key = `${id}_${type}`;
-        const v = actions[key] ? -1 : 1;
-        if(actions[key]) delete actions[key]; else actions[key] = true;
+    if (!globalVerified) return alert("❌ ACCESS DENIED: Identity not verified!");
+
+    const key = `${id}_${type}`;
+    const isAlreadyDone = actions[key] === true;
+    const v = isAlreadyDone ? -1 : 1;
+    const p = isAlreadyDone ? -5 : 5;
+
+    try {
+        const unitRef = doc(db, "elite_units", id);
+        
+        // Database Update
+        await updateDoc(unitRef, { 
+            [type]: increment(v), 
+            points: increment(p) 
+        });
+
+        // Local Storage Sync
+        if (isAlreadyDone) {
+            delete actions[key];
+        } else {
+            actions[key] = true;
+        }
         localStorage.setItem('v52_acts', JSON.stringify(actions));
-        await updateDoc(doc(db, "elite_units", id), { [type]: increment(v), points: increment(v * 5) });
-    };
+        
+        // Simple Success Log (No annoying alerts for success)
+        console.log("Transmission Successful");
+
+    } catch (e) {
+        console.error("Internal Error:", e);
+        // User-friendly "Elite" style alert
+        alert("⚠️ SIGNAL DISRUPTED: Unable to sync with Command Center. Try again, Unit!");
+    }
+};
 
     window.saveProfile = async () => {
         const r = document.getElementById('editRole').value;
@@ -396,4 +423,5 @@
     init();
 </script>
 </body>
+
 </html>
