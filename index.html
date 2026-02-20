@@ -182,30 +182,48 @@
         </div>
 
         <div class="sidebar" id="sidebarBox">
-            <h3 style="margin-bottom:15px; color: var(--primary); font-weight: 800;">Plug into Grid</h3>
-            <form id="regForm">
-                <div class="preview-circle" onclick="document.getElementById('userImg').click()">
-                    <span id="plusIcon" style="font-size: 24px; color: var(--primary);">+</span><img id="imgPreview" style="width:100%; height:100%; object-fit:cover; display:none;">
-                </div>
-                <input type="file" id="userImg" accept="image/*" style="display:none;" required>
-                <input type="text" id="userName" placeholder="Full Name" required>
-                <input type="number" id="userContact" placeholder="WhatsApp No." required>
-                <select id="userRole">
-                    <option value="Frontend Ninja">Frontend Ninja</option>
-                    <option value="Backend Architect">Backend Architect</option>
-                    <option value="Designer">Designer</option>
-                    <option value="Video Editor">Video Editor</option>
-                </select>
-                <select id="userSituation" required>
-                    <option value="" disabled selected>Select Status</option>
-                    <option value="UG Student">UG Student</option>
-                    <option value="PG Student">PG Student</option>
-                    <option value="Dropper">Dropper</option>
-                    <option value="Pro">Working Professional</option>
-                </select>
-                <button type="submit" id="bootBtn" class="boot-btn">BOOT SYSTEM</button>
-            </form>
+    <h3 style="margin-bottom:15px; color: var(--primary); font-weight: 800;">Plug into Grid</h3>
+    <form id="regForm">
+        <div class="preview-circle" onclick="document.getElementById('userImg').click()" title="Upload Profile Photo">
+            <span id="plusIcon" style="font-size: 24px; color: var(--primary);">+</span>
+            <img id="imgPreview" style="width:100%; height:100%; object-fit:cover; display:none;">
         </div>
+        <input type="file" id="userImg" accept="image/*" style="display:none;" required>
+
+        <input type="text" id="userName" placeholder="Full Name" required>
+        
+        <input type="text" id="userContact" inputmode="numeric" placeholder="WhatsApp No. (10 Digits)" required>
+
+        <select id="userRole" required>
+            <option value="" disabled selected>Select Specialization</option>
+            <option value="Frontend Ninja">Frontend Ninja</option>
+            <option value="Backend Architect">Backend Architect</option>
+            <option value="AI / ML Engineer">AI / ML Engineer</option>
+            <option value="Security Researcher">Security Researcher</option>
+            <option value="Full Stack Dev">Full Stack Dev</option>
+            <option value="Data Scientist">Data Scientist</option>
+            <option value="Designer">UI/UX Designer</option>
+            <option value="Video Editor">Video Editor</option>
+        </select>
+
+        <select id="userSituation" required>
+            <option value="" disabled selected>Select Current Status</option>
+            <option value="UG Student">UG Student</option>
+            <option value="PG Student">PG Student</option>
+            <option value="Dropper">Dropper</option>
+            <option value="Working Professional">Working Professional</option>
+            <option value="Freelancer">Freelancer</option>
+        </select>
+
+        <input type="password" id="userPass" placeholder="Set Recovery Password (Min 4 digits)" required>
+
+        <button type="submit" id="bootBtn" class="boot-btn">BOOT SYSTEM</button>
+
+        <p style="font-size: 11px; text-align: center; margin-top: 15px; color: #64748b;">
+            Cache Cleared? <a href="#" onclick="window.recoverIdentity(); return false;" style="color:var(--primary); font-weight: 800; text-decoration: none;">RECOVER IDENTITY</a>
+        </p>
+    </form>
+</div>
 
         <div class="secure-zone">
             <div class="admin-card" data-aos="fade-right">
@@ -234,7 +252,6 @@
     </footer>
 
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -254,17 +271,23 @@
 
     window.toggleMenu = () => { document.getElementById('navLinks').classList.toggle('active'); };
 
-    // --- 1. UNIQUE ID GENERATION (Overwriting Fix) ---
+    // --- 1. SECURITY & IDENTITY ---
+    const clean = (str) => {
+        if (!str) return "";
+        const temp = document.createElement('div');
+        temp.textContent = str;
+        return temp.innerHTML;
+    };
+
     let sysId = localStorage.getItem('g_fusebox_uid');
     if (!sysId) {
-        sysId = 'ELITE_' + Math.random().toString(36).substr(2, 9) + Date.now();
+        sysId = 'ELITE_' + crypto.randomUUID(); 
         localStorage.setItem('g_fusebox_uid', sysId);
     }
 
-    // --- 2. ARENA NAVIGATION GUARD (Code Wars Security) ---
+    // --- 2. ARENA NAVIGATION GUARD ---
     window.enterArena = async (e) => {
         if(e) e.preventDefault();
-        
         const q = query(collection(db, "elite_units"), where("deviceId", "==", sysId));
         const snap = await getDocs(q);
 
@@ -275,7 +298,7 @@
             if (u.in_arena === "yes") {
                 window.location.href = "newerena.html";
             } else {
-                alert("⏳ ACCESS PENDING: Lead Architect Gaurav Yadav has not approved your unit for the War Room yet.");
+                alert("⏳ ACCESS PENDING: Lead Architect Gaurav Yadav has not approved your unit yet.");
             }
         }
     };
@@ -287,7 +310,7 @@
         
         if (!snap.empty) {
             const u = snap.docs[0].data();
-            localStorage.setItem('current_session_user', u.name);
+            localStorage.setItem('current_session_user', clean(u.name));
 
             if(u.in_arena === "yes") {
                 document.getElementById('chatInp').disabled = false;
@@ -301,21 +324,21 @@
                         <img src="${u.photo}" style="width:100%; height:100%; object-fit:cover;">
                     </div>
                     <h3 style="color:var(--primary); font-weight:800;">${u.in_arena === 'yes' ? 'SYSTEM ACTIVE' : 'PENDING'}</h3>
-                    <p>Welcome, <b>${u.name}</b></p><br>
+                    <p>Welcome, <b>${clean(u.name)}</b></p><br>
                     <a href="ellite.html" class="boot-btn">MY PROFILE</a>
                 </div>`;
         }
     };
     checkLock();
 
-    // --- 4. PRIVATE CHAT LOGIC (1-to-1) ---
+    // --- 4. SECURE CHAT LOGIC ---
     window.sendSecureMsg = async () => {
         const user = localStorage.getItem('current_session_user');
         const inp = document.getElementById('chatInp');
         if(!user || !inp.value.trim()) return;
         await addDoc(collection(db, "secure_chats"), { 
             sender: user, 
-            msg: btoa(inp.value), 
+            msg: btoa(clean(inp.value)), 
             time: Date.now(),
             deviceId: sysId 
         });
@@ -329,10 +352,9 @@
         box.innerHTML = '';
         snap.forEach(doc => {
             const c = doc.data();
-            // Sirf apna ya admin ka message dikhega
             if(c.sender === me || c.sender === "🛡️ ADMIN") {
                 const style = (c.sender === me) ? 'margin-left:auto; background:var(--primary); color:white;' : 'background:#eee; color:black;';
-                box.innerHTML += `<div style="max-width:85%; padding:10px; border-radius:12px; margin-bottom:10px; font-size:0.8rem; width:fit-content; ${style}"><strong>${c.sender}</strong><br>${atob(c.msg)}</div>`;
+                box.innerHTML += `<div style="max-width:85%; padding:10px; border-radius:12px; margin-bottom:10px; font-size:0.8rem; width:fit-content; ${style}"><strong>${clean(c.sender)}</strong><br>${clean(atob(c.msg))}</div>`;
             }
         });
         box.scrollTop = box.scrollHeight;
@@ -354,36 +376,85 @@
         reader.readAsDataURL(e.target.files[0]);
     };
 
-    // --- 7. REGISTRATION ---
+    // --- 7. REGISTRATION (Upgraded: Anti-Duplicate + Strong Password) ---
     document.getElementById('regForm').onsubmit = async (e) => {
         e.preventDefault();
+        const rawName = document.getElementById('userName').value.trim();
+        const contact = document.getElementById('userContact').value.trim();
+        const pass = document.getElementById('userPass').value;
         const btn = document.getElementById('bootBtn');
-        btn.disabled = true; btn.innerText = "BOOTING...";
+
+        // Validations
+        if (!/^[0-9]{10}$/.test(contact)) return alert("🚫 INVALID CONTACT: 10 digits required.");
+        
+        const specialCharRegex = /[!@#$%^&*(),.?":{}|<>]/;
+        if (pass.length < 6) return alert("🚫 WEAK PASSWORD: Minimum 6 characters required.");
+        if (!specialCharRegex.test(pass)) return alert("🚫 SECURITY: Password must contain at least one special character.");
+
+        btn.disabled = true; btn.innerText = "VERIFYING IDENTITY...";
+
         try {
+            // Check if name exists
+            const qName = query(collection(db, "elite_units"), where("name", "==", clean(rawName)));
+            const nameSnap = await getDocs(qName);
+
+            if (!nameSnap.empty) {
+                alert("❌ IDENTITY ERROR: Name already registered. Use a unique handle.");
+                btn.disabled = false; btn.innerText = "PLUG INTO GRID";
+                return;
+            }
+
             await addDoc(collection(db, "elite_units"), {
-                name: document.getElementById('userName').value.trim(),
+                name: clean(rawName),
+                password: clean(pass),
                 deviceId: sysId,
-                role: document.getElementById('userRole').value,
-                contact: document.getElementById('userContact').value,
-                situation: document.getElementById('userSituation').value,
+                role: clean(document.getElementById('userRole').value),
+                contact: clean(contact),
+                situation: clean(document.getElementById('userSituation').value),
                 photo: document.getElementById('imgPreview').src,
                 points: 0, likes: 0, followers: 0, in_arena: "no", time: Date.now()
             });
-            alert("Registration Complete! Access to Code Wars will be granted after Admin verification.");
+
+            localStorage.setItem('current_session_user', clean(rawName));
+            localStorage.setItem('g_fusebox_uid', sysId);
+
+            alert("✅ UNIT REGISTERED! Identity Secured.");
             location.reload(); 
-        } catch (err) { alert(err.message); btn.disabled = false; }
+        } catch (err) { alert(err.message); btn.disabled = false; btn.innerText = "PLUG INTO GRID"; }
     };
 
-    // --- 8. ELITE SQUAD SYNC ---
+    // --- 8. IDENTITY RECOVERY (Strict Protocol) ---
+    window.recoverIdentity = async () => {
+        const name = prompt("Enter Registered Name:");
+        if(!name) return;
+        const pass = prompt("Enter Recovery Password:");
+        if(!pass) return;
+
+        const q = query(collection(db, "elite_units"), 
+                        where("name", "==", name.trim()), 
+                        where("password", "==", pass.trim()));
+        const snap = await getDocs(q);
+
+        if (!snap.empty) {
+            const u = snap.docs[0].data();
+            localStorage.setItem('g_fusebox_uid', u.deviceId);
+            localStorage.setItem('current_session_user', u.name);
+            alert("📡 CONNECTION RESTORED! Welcome back.");
+            location.reload();
+        } else {
+            alert("❌ ACCESS DENIED: Invalid Credentials.");
+        }
+    };
+
+    // --- 9. ELITE SQUAD SYNC ---
     onSnapshot(query(collection(db, "elite_units"), orderBy("time", "desc"), limit(3)), (snap) => {
         const grid = document.getElementById('featuredGrid');
         grid.innerHTML = '';
         snap.forEach(doc => {
             const u = doc.data();
-            grid.innerHTML += `<div class="member-card"><img src="${u.photo}"><h4>${u.name}</h4><p style="color:var(--primary); font-size:0.7rem; font-weight:800;">${u.role}</p></div>`;
+            grid.innerHTML += `<div class="member-card"><img src="${u.photo}"><h4>${clean(u.name)}</h4><p style="color:var(--primary); font-size:0.7rem; font-weight:800;">${clean(u.role)}</p></div>`;
         });
     });
 </script>
 </body>
 </html>
-
