@@ -5,91 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Transformation Hub | G-Fusebox v52.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap" rel="stylesheet">
-    <style>
-        :root { 
-            --bg-dark: #0b1120; 
-            --sidebar-bg: #1e293b;
-            --accent-blue: #2563eb; 
-            --gold: #f59e0b; 
-            --text-main: #1e293b; 
-            --neon-green: #10b981;
-            --danger: #ef4444;
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: var(--bg-dark); font-family: 'Plus Jakarta Sans', sans-serif; color: #f1f5f9; min-height: 100vh; padding-top: 80px; }
-        
-        /* HEADER */
-        .fixed-header { 
-            position: fixed; top: 0; left: 0; right: 0; z-index: 2000; 
-            background: var(--sidebar-bg); padding: 0 5%; display: flex; 
-            align-items: center; justify-content: space-between; border-bottom: 1px solid #334155; height: 70px; 
-        }
-        .btn-home { background: #0f172a; border: 1px solid #334155; color: white; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: 800; font-size: 11px; }
-        .profile-area { display: flex; align-items: center; gap: 12px; }
-        #userImgHeader { width: 42px; height: 42px; border-radius: 10px; border: 2px solid var(--accent-blue); object-fit: cover; background: #fff; }
-
-        /* SEARCH BAR */
-        .search-wrap { width: 100%; display: flex; justify-content: center; padding: 20px; }
-        .search-bar { width: 100%; max-width: 700px; padding: 16px 25px; background: var(--sidebar-bg); border: 1px solid #334155; border-radius: 15px; color: white; outline: none; }
-
-        .container { display: flex; max-width: 1440px; margin: 0 auto; padding: 20px; gap: 30px; }
-
-        /* CHAT SIDEBAR */
-        .sidebar { width: 340px; flex-shrink: 0; }
-        .chat-ui { background: var(--sidebar-bg); border: 1px solid #334155; border-radius: 20px; height: 550px; display: flex; flex-direction: column; overflow: hidden; }
-        #chatList { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; background: #0b1120; }
-        .msg-bubble { background: #1e293b; padding: 12px; border-radius: 12px; border-left: 4px solid var(--accent-blue); font-size: 13px; }
-        .m-name { color: var(--gold); font-weight: 800; font-size: 10px; display: flex; justify-content: space-between; margin-bottom: 4px; }
-        .chat-input { padding: 15px; display: flex; gap: 10px; background: var(--sidebar-bg); }
-        .chat-input input { flex: 1; background: #0f172a; border: 1px solid #334155; color: white; padding: 12px; border-radius: 10px; outline: none; }
-
-        /* GRID & CARDS */
-        .content { flex: 1; }
-        .section-label { font-size: 14px; color: var(--gold); margin: 30px 0 15px; font-weight: 800; text-transform: uppercase; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; }
-        
-        .card { background: white; border-radius: 25px; padding: 25px; color: var(--text-main); position: relative; box-shadow: 0 15px 35px rgba(0,0,0,0.5); border: 1px solid #e2e8f0; }
-        .my-card-border { border: 4px solid var(--accent-blue) !important; }
-
-        .official-badge { position: absolute; top: -12px; right: 15px; background: linear-gradient(45deg, #f59e0b, #fbbf24); color: #000; font-size: 10px; font-weight: 900; padding: 5px 15px; border-radius: 30px; border: 3px solid white; z-index: 10; }
-        .req-badge { position: absolute; top: -15px; left: 15px; background: #ef4444; color: white; padding: 8px 15px; border-radius: 30px; font-size: 10px; font-weight: 800; border: 3px solid white; animation: pulse 1.5s infinite; cursor: pointer; z-index: 100; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
-
-        .card-top { display: flex; gap: 15px; margin-bottom: 18px; align-items: center; }
-        .card-top img { width: 75px; height: 75px; border-radius: 18px; object-fit: cover; border: 3px solid #f1f5f9; }
-
-        /* XP & SCORE UI */
-        .xp-wrapper { margin: 10px 0; }
-        .xp-label { display: flex; justify-content: space-between; font-size: 10px; font-weight: 800; color: #64748b; margin-bottom: 5px; }
-        .xp-container { background: #e2e8f0; height: 8px; border-radius: 10px; overflow: hidden; }
-        .xp-bar { height: 100%; background: linear-gradient(90deg, var(--accent-blue), var(--neon-green)); transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
-        .score-badge { background: var(--bg-dark); color: white; padding: 3px 8px; border-radius: 6px; font-size: 10px; }
-
-        .stats-box { display: flex; justify-content: space-between; background: #f1f5f9; padding: 12px; border-radius: 15px; margin-bottom: 15px; font-size: 11px; font-weight: 800; }
-        
-        .card-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .act-btn { border: 2px solid #f1f5f9; padding: 12px; border-radius: 12px; font-size: 10px; font-weight: 800; cursor: pointer; background: white; transition: 0.2s; }
-        
-        .btn-req { grid-column: span 2; background: #0f172a !important; color: white !important; }
-        .btn-participate { grid-column: span 2; background: linear-gradient(45deg, var(--neon-green), #059669) !important; color: white !important; border: none !important; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
-
-        .act-btn.liked { background: #fee2e2; color: #ef4444; }
-        .act-btn.followed { background: var(--accent-blue); color: white; }
-        .edit-btn { position: absolute; top: 15px; right: 15px; background: #f1f5f9; border: none; padding: 8px; border-radius: 10px; cursor: pointer; z-index: 5; }
-
-        /* UPGRADED MODAL UI */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2900; backdrop-filter: blur(4px); }
-        .req-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 420px; background: white; color: #1e293b; z-index: 3000; border-radius: 25px; padding: 30px; box-shadow: 0 25px 50px rgba(0,0,0,0.4); }
-        
-        .edit-input-group { margin-bottom: 15px; }
-        .edit-input-group label { display: block; font-size: 11px; font-weight: 800; color: var(--accent-blue); margin-bottom: 8px; text-transform: uppercase; }
-        .edit-input-group select, .edit-input-group input { width: 100%; padding: 12px; border-radius: 12px; border: 2px solid #f1f5f9; outline: none; font-family: inherit; font-weight: 700; }
-
-        .load-more-wrap { display: flex; justify-content: center; padding: 40px 0; }
-        .btn-load { background: var(--sidebar-bg); border: 2px solid var(--accent-blue); color: white; padding: 15px 40px; border-radius: 15px; font-weight: 800; cursor: pointer; }
-
-        @media (max-width: 1000px) { .container { flex-direction: column; } .sidebar { width: 100%; } }
-    </style>
+    <link rel="stylesheet" href="elite-style.css">
 </head>
 <body>
 
@@ -130,7 +46,7 @@
 </div>
 
 <nav class="fixed-header">
-    <button class="btn-home" onclick="window.location.href='index.html'">← EXIT</button>
+    <button class="btn-home" onclick="window.location.href='index.html'">← COMMAND</button>
     <div class="profile-area">
         <div style="text-align:right">
             <b id="myNameHeader" style="font-size:13px; color:white">GUEST</b><br>
@@ -139,7 +55,11 @@
         <img id="userImgHeader" src="https://api.dicebear.com/7.x/bottts/svg?seed=guest">
     </div>
 </nav>
-
+<div style="text-align: center; margin-bottom: 10px;">
+    <span id="unitCounter" style="background: var(--sidebar-bg); padding: 5px 15px; border-radius: 20px; border: 1px solid var(--accent-blue); font-size: 10px; font-weight: 800; color: var(--neon-green); letter-spacing: 1px;">
+        📡 SCANNING UNITS...
+    </span>
+</div>
 <div class="search-wrap">
     <input type="text" id="searchBar" class="search-bar" placeholder="Search elite units by name...">
 </div>
@@ -181,17 +101,26 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+
+    // --- 🛡️ SESSION & IDENTITY CONSTANTS ---
     const myName = localStorage.getItem('current_session_user') || "";
+    const mySystemId = localStorage.getItem('g_fusebox_uid') || ""; // Check for the secret ID
+    
     let actions = JSON.parse(localStorage.getItem('v52_acts') || '{}');
     let globalVerified = false;
     let mySignals = [];
     let visibleCount = 6;
     let targetUnitName = ""; 
     let currentEditId = "";
+    let isProcessing = false;
 
     async function init() {
-        if(myName) {
-            const q = query(collection(db, "elite_units"), where("name", "==", myName));
+        // Only verify if BOTH name and system ID exist
+        if(myName && mySystemId) {
+            const q = query(collection(db, "elite_units"), 
+                            where("name", "==", myName), 
+                            where("deviceId", "==", mySystemId));
+            
             const snap = await getDocs(q);
             if(!snap.empty) {
                 globalVerified = true;
@@ -199,7 +128,11 @@
                 document.getElementById('myNameHeader').innerText = myName.toUpperCase();
                 document.getElementById('myRoleHeader').innerText = (me.role || "UNIT").toUpperCase();
                 document.getElementById('userImgHeader').src = me.photo || `https://api.dicebear.com/7.x/bottts/svg?seed=${myName}`;
+            } else {
+                setupGuestUI();
             }
+        } else {
+            setupGuestUI();
         }
 
         // Global Chat
@@ -214,22 +147,32 @@
             list.scrollTop = list.scrollHeight;
         });
 
-        // Realtime Signals
-        if (myName) {
+        // Realtime Signals (Only if verified)
+        if (globalVerified) {
             onSnapshot(query(collection(db, "unit_requests"), where("to", "==", myName)), (s) => {
                 mySignals = s.docs.map(d => ({ id: d.id, ...d.data() }));
                 refreshGrid();
             });
         }
 
-        // Realtime Units Update (Terminal Points Included)
+        // Realtime Units Update
         onSnapshot(collection(db, "elite_units"), (s) => {
             window.cachedUnits = s.docs.map(d => ({ id: d.id, ...d.data() }));
             refreshGrid();
         });
     }
 
+    function setupGuestUI() {
+        globalVerified = false;
+        document.getElementById('myNameHeader').innerText = "UNVERIFIED";
+        document.getElementById('myNameHeader').style.color = "var(--danger)";
+        document.getElementById('chatIn').placeholder = "Reboot to unlock chat...";
+        document.getElementById('chatIn').disabled = true;
+    }
+
     function refreshGrid() {
+        const totalUnits = (window.cachedUnits || []).length;
+    document.getElementById('unitCounter').innerText = `📡 ACTIVE ELITE UNITS: ${totalUnits}`;
         const dg = document.getElementById('directorGrid');
         const ug = document.getElementById('unitGrid');
         if(!dg || !ug) return;
@@ -246,61 +189,129 @@
     }
 
     function renderCard(u) {
-        const isMe = u.name === myName;
-        const lk = actions[`${u.id}_likes`];
-        const fl = actions[`${u.id}_followers`];
-        const lock = !globalVerified;
-        const isOff = u.status === "selected";
-        const isPending = u.arena_request === "pending";
-        const inArena = u.in_arena === "yes";
-        
-        // UNIFIED POINTS LOGIC: Combining Terminal, 1v1, 3v3 points
-        const totalPoints = u.points || 0;
-        const xpPercent = Math.min((totalPoints / 10), 100); 
+    // 1. --- 🎨 FAST-PACED COLORS (Har thode XP par change) ---
+    const getDynamicColor = (pts) => {
+        if (pts < 0) return '#ef4444';    // Red (Exiled)
+        if (pts <= 50) return '#f97316';  // Orange (Rookie)
+        if (pts <= 100) return '#f59e0b'; // Gold (Specialist)
+        if (pts <= 250) return '#10b981'; // Green (Enforcer)
+        if (pts <= 500) return '#0ea5e9'; // Blue (Elite)
+        if (pts <= 1000) return '#8b5cf6'; // Purple (Phantom)
+        if (pts <= 2000) return '#ec4899'; // Pink (Cyber Lord)
+        if (pts <= 5000) return '#6366f1'; // Indigo (Void Walker)
+        if (pts <= 7500) return '#ffffff'; // White (Ghost God)
+        return '#00ff41'; // Matrix Green (10k+ Singularity)
+    };
 
-        return `
-            <div class="card ${isMe ? 'my-card-border' : ''}">
-                ${isOff ? `<div class="official-badge">🎖️ OFFICIAL TEAM</div>` : ''}
-                ${(isMe && mySignals.length > 0) ? `<div class="req-badge" onclick="window.openLogs()">📩 ${mySignals.length} SIGNALS</div>` : ''}
-                ${isMe ? `<button class="edit-btn" onclick="window.openEdit('${u.id}')">⚙️</button>` : ''}
-                
-                <div class="card-top">
-                    <img src="${u.photo || 'https://api.dicebear.com/7.x/bottts/svg?seed='+u.name}">
-                    <div style="flex:1">
-                        <h4 style="font-weight:800; font-size:15px; color:var(--text-main)">${u.name} ${isOff ? '✅' : ''}</h4>
-                        <p style="font-size:11px; color:var(--accent-blue); font-weight:800">${(u.role || 'ELITE UNIT').toUpperCase()}</p>
-                        
-                        <div class="xp-wrapper">
-                            <div class="xp-label"><span>CORE XP</span> <span>${totalPoints}</span></div>
-                            <div class="xp-container"><div class="xp-bar" style="width: ${xpPercent}%"></div></div>
+    // 2. --- 🎖️ QUICK BADGES & RANKS ---
+    const getRank = (pts) => {
+        if (pts < 0) return { n: 'EXILED', b: '🚫' };
+        if (pts <= 50) return { n: 'ROOKIE', b: '🌱' };
+        if (pts <= 100) return { n: 'SPECIALIST', b: '⚡' };
+        if (pts <= 250) return { n: 'ENFORCER', b: '🗡️' };
+        if (pts <= 500) return { n: 'ELITE UNIT', b: '🛡️' };
+        if (pts <= 1000) return { n: 'PHANTOM', b: '👻' };
+        if (pts <= 2000) return { n: 'CYBER LORD', b: '👑' };
+        if (pts <= 5000) return { n: 'VOID WALKER', b: '🌌' };
+        if (pts <= 7500) return { n: 'NEON GHOST', b: '💎' };
+        return { n: 'SINGULARITY', b: '🌀' };
+    };
+
+    const isMyProfile = u.name === myName;
+    const isMeVerified = isMyProfile && globalVerified;
+    const isMeLost = isMyProfile && !globalVerified;
+
+    const lk = actions[`${u.id}_likes`];
+    const fl = actions[`${u.id}_followers`];
+    const isOff = u.status === "selected";
+    const isPending = u.arena_request === "pending";
+    const inArena = u.in_arena === "yes";
+    
+    const totalPoints = u.points || 0;
+    const rank = getRank(totalPoints);
+    const barColor = getDynamicColor(totalPoints);
+
+    // 3. --- 📈 SMART BAR EXPANSION (Up to 10k) ---
+    let milestone = 100;
+    if (totalPoints > 100) milestone = 500;
+    if (totalPoints > 500) milestone = 1000;
+    if (totalPoints > 1000) milestone = 2500;
+    if (totalPoints > 2500) milestone = 5000;
+    if (totalPoints > 5000) milestone = 10000;
+    const xpPercent = totalPoints < 0 ? 100 : Math.min((totalPoints / milestone) * 100, 100); 
+
+    return `
+        <div class="card ${isMeVerified ? 'my-card-border' : ''}" 
+             style="${isMeLost ? 'border: 2px dashed var(--danger); opacity:0.9;' : ''} 
+                    ${totalPoints >= 100 ? `box-shadow: 0 0 15px ${barColor}33; border: 1px solid ${barColor}44;` : ''}">
+            
+            ${isOff ? `<div class="official-badge">🎖️ OFFICIAL TEAM</div>` : ''}
+            ${isMeVerified && mySignals.length > 0 ? `<div class="req-badge" onclick="window.openLogs()">📩 ${mySignals.length} SIGNALS</div>` : ''}
+            ${isMeLost ? `<div class="req-badge" onclick="alert('IDENTITY LOST!')" style="background:black;">⚠️ LINK BROKEN</div>` : ''}
+            ${isMeVerified ? `<button class="edit-btn" onclick="window.openEdit('${u.id}')">⚙️</button>` : ''}
+            
+            <div class="card-top">
+                <img src="${u.photo || 'https://api.dicebear.com/7.x/bottts/svg?seed='+u.name}" style="border: 1px solid ${barColor}77">
+                <div style="flex:1">
+                    <h4 style="font-weight:800; font-size:15px; color:var(--text-main)">
+                        <span style="font-size:12px">${rank.b}</span> ${u.name} ${isOff ? '✅' : ''}
+                    </h4>
+                    <p style="font-size:10px; color:${barColor}; font-weight:800; letter-spacing:1px">${rank.n}</p>
+                    
+                    <div class="xp-wrapper">
+                        <div class="xp-label">
+                            <span style="color:${barColor}">● CORE XP</span> 
+                            <span class="score-badge" style="background:${barColor}">${totalPoints}</span>
+                        </div>
+                        <div class="xp-container">
+                            <div class="xp-bar" style="width: ${xpPercent}%; background: ${barColor}; box-shadow: 0 0 10px ${barColor}44;"></div>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="stats-box">
+            <div class="stats-box">
+                <div style="display:flex; justify-content:space-between; width:100%; font-size:10px;">
                     <span>❤️ LIKES: ${u.likes || 0}</span>
                     <span>👥 FOLLOWS: ${u.followers || 0}</span>
+                    <span style="color:${barColor}; font-weight:bold;">LVL ${Math.floor(totalPoints/100)}</span>
                 </div>
+            </div>
 
-                <div class="card-actions">
-                    <button class="act-btn ${lk?'liked':''}" onclick="window.act('${u.id}','likes')" ${lock?'disabled':''}>LIKE</button>
-                    <button class="act-btn ${fl?'followed':''}" onclick="window.act('${u.id}','followers')" ${lock?'disabled':''}>FOLLOW</button>
-                    
-                    ${!isMe ? 
-                        `<button class="act-btn btn-req" onclick="window.openSignal('${u.name}')" ${lock?'disabled':''}>SEND SIGNAL</button>` : 
-                        (inArena ? 
-                            `<button class="act-btn btn-participate" style="background:#64748b !important; box-shadow:none;" disabled>✅ IN ARENA</button>` :
-                            `<button class="act-btn btn-participate" onclick="window.requestArena('${u.id}')" ${(isPending || lock) ? 'disabled' : ''}>
-                                ${isPending ? '⏳ PENDING' : '🚀 ENTER ARENA'}
-                            </button>`
-                        )
-                    }
-                </div>
-            </div>`;
-    }
+            <div class="card-actions">
+                <button class="act-btn ${lk?'liked':''}" onclick="window.secureAct('${u.id}','likes')" ${!globalVerified?'style="opacity:0.5"':''}>LIKE</button>
+                <button class="act-btn ${fl?'followed':''}" onclick="window.secureAct('${u.id}','followers')" ${!globalVerified?'style="opacity:0.5"':''}>FOLLOW</button>
+                
+                ${!isMyProfile ? 
+                    `<button class="act-btn btn-req" onclick="window.secureSignal('${u.name}')" ${!globalVerified?'style="opacity:0.5"':''}>SEND SIGNAL</button>` : 
+                    (inArena ? 
+                        `<button class="act-btn btn-participate" style="background:#64748b !important; box-shadow:none;" disabled>✅ IN ARENA</button>` :
+                        `<button class="act-btn btn-participate" onclick="window.secureArena('${u.id}')" ${isPending || !globalVerified ? 'disabled style="opacity:0.5"' : ''}>
+                            ${isPending ? '⏳ PENDING' : '🚀 ENTER ARENA'}
+                        </button>`
+                    )
+                }
+            </div>
+        </div>`;
+}
 
-    // --- GLOBAL FUNCTIONS ---
+    // --- 🛡️ SECURITY WRAPPERS ---
+    window.secureAct = (id, type) => {
+        if(!globalVerified) return alert("🔒 ACCESS LOCKED: Identity lost. Recover from Command Home!");
+        window.act(id, type);
+    };
 
+    window.secureSignal = (target) => {
+        if(!globalVerified) return alert("🔒 SIGNAL ERROR: Verified link required to transmit data.");
+        window.openSignal(target);
+    };
+
+    window.secureArena = (id) => {
+        if(!globalVerified) return alert("🔒 ARENA LOCKED: Please re-authenticate your unit.");
+        window.requestArena(id);
+    };
+
+    // --- LOGIC FUNCTIONS ---
     window.openSignal = (target) => {
         targetUnitName = target;
         document.getElementById('reqTargetTitle').innerText = `SIGNAL TO ${target}`;
@@ -347,54 +358,36 @@
         alert("Request Sent!");
     };
 
-    // Ek global lock variable taaki double-tap na ho
-let isProcessing = false;
-
-window.act = async (id, type) => {
-    // 1. Agar pehle se process ho raha hai, toh click ignore karo
-    if (isProcessing) return;
-    if (!globalVerified) return alert("🚫 ACCESS DENIED: Verify Unit First!");
-
-    const key = `${id}_${type}`;
-    const isAlreadyDone = actions[key] === true;
-    
-    const v = isAlreadyDone ? -1 : 1;
-    const p = isAlreadyDone ? -5 : 5;
-
-    // --- OPTIMISTIC UI UPDATE (Turant badlo) ---
-    isProcessing = true; // Lock laga do
-    
-    if (isAlreadyDone) {
-        delete actions[key];
-    } else {
-        actions[key] = true;
-    }
-    
-    localStorage.setItem('v52_acts', JSON.stringify(actions));
-    refreshGrid(); // UI turant update ho jayega bina wait kiye
-
-    try {
-        const unitRef = doc(db, "elite_units", id);
+    window.act = async (id, type) => {
+        if (isProcessing) return;
         
-        // Background mein Firebase update bhej rahe hain
-        await updateDoc(unitRef, { 
-            [type]: increment(v), 
-            points: increment(p) 
-        });
-        
-        console.log("Transmission Success");
+        const key = `${id}_${type}`;
+        const isAlreadyDone = actions[key] === true;
+        const v = isAlreadyDone ? -1 : 1;
+        const p = isAlreadyDone ? -5 : 5;
 
-    } catch (e) {
-        console.error("Sync Error:", e);
-        // Agar error aaye toh state wapas purani kar do (Rollback)
-        if (isAlreadyDone) actions[key] = true; else delete actions[key];
+        // Optimistic UI Update
+        isProcessing = true;
+        if (isAlreadyDone) delete actions[key]; else actions[key] = true;
         localStorage.setItem('v52_acts', JSON.stringify(actions));
-        refreshGrid();
-        alert("⚠️ SIGNAL FAILED: Reverted status.");
-    } finally {
-        isProcessing = false; // Lock khol do
-    }
-};
+        refreshGrid(); 
+
+        try {
+            await updateDoc(doc(db, "elite_units", id), { 
+                [type]: increment(v), 
+                points: increment(p) 
+            });
+        } catch (e) {
+            // Rollback on error
+            if (isAlreadyDone) actions[key] = true; else delete actions[key];
+            localStorage.setItem('v52_acts', JSON.stringify(actions));
+            refreshGrid();
+            alert("Sync Failed!");
+        } finally {
+            isProcessing = false;
+        }
+    };
+
     window.saveProfile = async () => {
         const r = document.getElementById('editRole').value;
         const f = document.getElementById('editFile').files[0];
@@ -436,6 +429,4 @@ window.act = async (id, type) => {
     init();
 </script>
 </body>
-
 </html>
-
